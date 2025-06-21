@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>积分奖励系统</title>
+    <!-- 加载Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 加载Font Awesome图标 -->
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 配置Tailwind自定义主题 -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#8DC6F0',       // 主色调（可自定义）
+                        secondary: '#EA9FB2',     // 辅助色（可自定义）
+                        success: '#BEE2F6',       // 成功色（可自定义）
+                        danger: '#DCD83',        // 危险色（可自定义）
+                        neutral: {
+                            100: '#EF2D7E3',      // 最浅背景色（可自定义）
+                            200: '#EF2D7E3',      // 浅背景色（可自定义）
+                            700: '#BEE2F6',      // 次要文字颜色（可自定义）
+                            900: '#EA9FB2',      // 主要文字颜色（可自定义）
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'], // 字体（可自定义）
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <!-- 自定义工具类 -->
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-shadow {
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            }
+            .btn-hover {
+                transition: all 0.2s ease;
+            }
+            .btn-hover:hover {
+                transform: translateY(-2px);
+            }
+            .fade-in {
+                animation: fadeIn 0.3s ease-in-out;
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+        }
+    </style>
+</head>
+<body class="bg-neutral-100 font-sans text-neutral-900">
+    <!-- 主容器 -->
+    <div class="min-h-screen flex flex-col">
+        <!-- 顶部导航栏 -->
+        <header class="bg-primary text-white shadow-md">
+            <div class="container mx-auto px-4 py-4">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-xl font-bold">积分奖励系统</h1>
+                    <div class="flex items-center">
+                        <i class="fa fa-trophy mr-2"></i>
+                        <span id="totalPoints" class="text-2xl font-bold">0</span>
+                        <span class="ml-1">积分</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主内容区 -->
+        <main class="flex-1 container mx-auto px-4 py-6">
+            <!-- 选项卡导航 -->
+            <div class="flex border-b">
+                <button id="eventsTabBtn" class="px-4 py-2 font-medium text-primary border-b-2 border-primary">
+                    事件
+                </button>
+                <button id="rewardsTabBtn" class="px-4 py-2 font-medium text-neutral-700">
+                    奖励
+                </button>
+            </div>
+
+            <!-- 事件列表 -->
+            <div id="eventsTab" class="py-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold">我的事件</h2>
+                    <button id="addEventBtn" class="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg flex items-center btn-hover">
+                        <i class="fa fa-plus mr-2"></i> 添加事件
+                    </button>
+                </div>
+                
+                <!-- 事件列表容器 -->
+                <div id="eventsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- 事件卡片会动态生成在这里 -->
+                </div>
+            </div>
+
+            <!-- 奖励列表 (默认隐藏) -->
+            <div id="rewardsTab" class="py-6 hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold">我的奖励</h2>
+                    <button id="addRewardBtn" class="bg-secondary hover:bg-secondary/90 text-white px-4 py-2 rounded-lg flex items-center btn-hover">
+                        <i class="fa fa-gift mr-2"></i> 添加奖励
+                    </button>
+                </div>
+                
+                <!-- 奖励列表容器 -->
+                <div id="rewardsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- 奖励卡片会动态生成在这里 -->
+                </div>
+            </div>
+        </main>
+
+        <!-- 添加事件模态框 (默认隐藏) -->
+        <div id="addEventModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 transform transition-all">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">添加新事件</h3>
+                    <button id="closeEventModal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="addEventForm">
+                    <div class="mb-4">
+                        <label class="block text-neutral-700 mb-2">事件名称</label>
+                        <input type="text" id="eventName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary" placeholder="例如：晨跑">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-neutral-700 mb-2">事件类型</label>
+                        <div class="flex space-x-4">
+                            <label class="flex items-center">
+                                <input type="radio" name="eventType" value="plus" checked class="mr-2">
+                                <span class="text-success">加分事件</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="eventType" value="minus" class="mr-2">
+                                <span class="text-danger">减分事件</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-neutral-700 mb-2">积分值</label>
+                        <div class="flex space-x-3">
+                            <button type="button" class="event-point-btn px-4 py-2 border-2 border-primary bg-primary text-white rounded-lg">1</button>
+                            <button type="button" class="event-point-btn px-4 py-2 border-2 border-gray-300 rounded-lg">2</button>
+                            <button type="button" class="event-point-btn px-4 py-2 border-2 border-gray-300 rounded-lg">3</button>
+                        </div>
+                        <input type="hidden" id="eventPoints" value="1">
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" id="cancelEventBtn" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100">取消</button>
+                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 添加奖励模态框 (默认隐藏) -->
+        <div id="addRewardModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 transform transition-all">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold">添加新奖励</h3>
+                    <button id="closeRewardModal" class="text-gray-500 hover:text-gray-700">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="addRewardForm">
+                    <div class="mb-4">
+                        <label class="block text-neutral-700 mb-2">奖励名称</label>
+                        <input type="text" id="rewardName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-secondary" placeholder="例如：看电影">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-neutral-700 mb-2">所需积分</label>
+                        <input type="number" id="rewardPoints" min="1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-secondary" placeholder="例如：50">
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-neutral-700 mb-2">奖励描述</label>
+                        <textarea id="rewardDescription" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-secondary" placeholder="描述这个奖励..."></textarea>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" id="cancelRewardBtn" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100">取消</button>
+                        <button type="submit" class="px-4 py-2 bg-secondary text-white rounded-lg hover:bg-secondary/90">保存</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 删除确认模态框 (默认隐藏) -->
+        <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4 transform transition-all">
+                <div class="text-center mb-6">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
+                        <i class="fa fa-trash text-red-500 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold" id="deleteModalTitle">删除事件</h3>
+                    <p class="text-neutral-700 mt-2" id="deleteModalMessage">确定要删除这个事件吗？</p>
+                </div>
+                
+                <div class="flex justify-center space-x-3">
+                    <button type="button" id="cancelDeleteBtn" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-100">取消</button>
+                    <button type="button" id="confirmDeleteBtn" class="px-6 py-2 bg-danger text-white rounded-lg hover:bg-danger/90">删除</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 操作提示 (默认隐藏) -->
+        <div id="toast" class="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-neutral-900 text-white px-6 py-3 rounded-lg shadow-lg opacity-0 transition-opacity duration-300 flex items-center">
+            <i id="toastIcon" class="fa fa-check-circle mr-2"></i>
+            <span id="toastMessage"></span>
+        </div>
+    </div>
+
+    <script>
+        // 数据模型
+        let appData = {
+            totalPoints: 0,
+            events: [],
+            rewards: []
+        };
+        
+        // 当前要删除的项目ID和类型
+        let currentDeleteId = null;
+        let currentDeleteType = null;
+        
+        // DOM元素
+        const eventsTabBtn = document.getElementById('eventsTabBtn');
+        const rewardsTabBtn = document.getElementById('rewardsTabBtn');
+        const eventsTab = document.getElementById('eventsTab');
+        const rewardsTab = document.getElementById('rewardsTab');
+        const addEventBtn = document.getElementById('addEventBtn');
+        const addRewardBtn = document.getElementById('addRewardBtn');
+        const addEventModal = document.getElementById('addEventModal');
+        const addRewardModal = document.getElementById('addRewardModal');
+        const deleteModal = document.getElementById('deleteModal');
+        const closeEventModal = document.getElementById('closeEventModal');
+        const closeRewardModal = document.getElementById('closeRewardModal');
+        const cancelEventBtn = document.getElementById('cancelEventBtn');
+        const cancelRewardBtn = document.getElementById('cancelRewardBtn');
+        const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const addEventForm = document.getElementById('addEventForm');
+        const addRewardForm = document.getElementById('addRewardForm');
+        const eventNameInput = document.getElementById('eventName');
+        const eventPointsInput = document.getElementById('eventPoints');
+        const eventPointBtns = document.querySelectorAll('.event-point-btn');
+        const rewardNameInput = document.getElementById('rewardName');
+        const rewardPointsInput = document.getElementById('rewardPoints');
+        const rewardDescriptionInput = document.getElementById('rewardDescription');
+        const totalPointsEl = document.getElementById('totalPoints');
+        const eventsContainer = document.getElementById('eventsContainer');
+        const rewardsContainer = document.getElementById('rewardsContainer');
+        const deleteModalTitle = document.getElementById('deleteModalTitle');
+        const deleteModalMessage = document.getElementById('deleteModalMessage');
+        const toast = document.getElementById('toast');
+        const toastIcon = document.getElementById('toastIcon');
+        const toastMessage = document.getElementById('toastMessage');
+        
+        // 初始化应用
+        function initApp() {
+            // 加载本地存储的数据
+            loadData();
+            
+            // 渲染界面
+            renderEvents();
+            renderRewards();
+            updatePointsDisplay();
+            
+            // 绑定事件监听器
+            bindEventListeners();
+        }
+        
+        // 从本地存储加载数据
+        function loadData() {
+            const savedData = localStorage.getItem('pointSystemData');
+            if (savedData) {
+                appData = JSON.parse(savedData);
+            } else {
+                // 初始化为空数据（用户需要自己添加事件和奖励）
+                appData = {
+                    totalPoints: 0,
+                    events: [],
+                    rewards: []
+                };
+                saveData();
+            }
+        }
+        
+        // 保存数据到本地存储
+        function saveData() {
+            localStorage.setItem('pointSystemData', JSON.stringify(appData));
+        }
+        
+        // 更新积分显示
+        function updatePointsDisplay() {
+            totalPointsEl.textContent = appData.totalPoints;
+        }
+        
+        // 渲染事件列表
+        function renderEvents() {
+            eventsContainer.innerHTML = '';
+            
+            if (appData.events.length === 0) {
+                eventsContainer.innerHTML = `
+                    <div class="col-span-full bg-neutral-200 rounded-lg p-6 text-center fade-in">
+                        <i class="fa fa-calendar-o text-neutral-400 text-4xl mb-3"></i>
+                        <p class="text-neutral-700">还没有事件，点击"添加事件"按钮创建你的第一个事件吧！</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            appData.events.forEach(event => {
+                const eventCard = document.createElement('div');
+                eventCard.className = 'bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 fade-in';
+                
+                // 根据积分是正还是负设置不同的样式
+                const isPositive = event.points > 0;
+                const pointColorClass = isPositive ? 'bg-success' : 'bg-danger';
+                const pointIcon = isPositive ? 'fa-plus-circle' : 'fa-minus-circle';
+                const actionText = isPositive ? '完成事件' : '扣除积分';
+                
+                eventCard.innerHTML = `
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-4">
+                            <h3 class="font-bold text-lg">${event.name}</h3>
+                            <span class="${pointColorClass} text-white px-3 py-1 rounded-full text-sm flex items-center">
+                                <i class="fa ${pointIcon} mr-1"></i> ${Math.abs(event.points)}
+                            </span>
+                        </div>
+                        <div class="flex space-x-3 mt-4">
+                            <button class="apply-event-btn flex-1 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg transition-colors duration-200" data-id="${event.id}">
+                                ${actionText}
+                            </button>
+                            <button class="delete-event-btn w-12 py-2 bg-neutral-200 hover:bg-danger hover:text-white rounded-lg transition-colors duration-200" data-id="${event.id}">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                eventsContainer.appendChild(eventCard);
+            });
+        }
+        
+        // 渲染奖励列表
+        function renderRewards() {
+            rewardsContainer.innerHTML = '';
+            
+            if (appData.rewards.length === 0) {
+                rewardsContainer.innerHTML = `
+                    <div class="col-span-full bg-neutral-200 rounded-lg p-6 text-center fade-in">
+                        <i class="fa fa-gift text-neutral-400 text-4xl mb-3"></i>
+                        <p class="text-neutral-700">还没有奖励，点击"添加奖励"按钮创建你的第一个奖励吧！</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            appData.rewards.forEach(reward => {
+                const rewardCard = document.createElement('div');
+                rewardCard.className = 'bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 fade-in';
+                
+                // 检查积分是否足够兑换
+                const canRedeem = appData.totalPoints >= reward.points;
+                const redeemBtnClass = canRedeem ? 'bg-secondary hover:bg-secondary/90' : 'bg-neutral-300 cursor-not-allowed';
+                
+                rewardCard.innerHTML = `
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-3">
+                            <h3 class="font-bold text-lg">${reward.name}</h3>
+                            <span class="bg-yellow-400 text-white px-3 py-1 rounded-full text-sm flex items-center">
+                                <i class="fa fa-star mr-1"></i> ${reward.points}
+                            </span>
+                        </div>
+                        <p class="text-neutral-700 mb-4">${reward.description}</p>
+                        <div class="flex space-x-3 mt-4">
+                            <button class="redeem-reward-btn flex-1 py-2 ${redeemBtnClass} text-white rounded-lg transition-colors duration-200" data-id="${reward.id}" ${canRedeem ? '' : 'disabled'}>
+                                兑换奖励
+                            </button>
+                            <button class="delete-reward-btn w-12 py-2 bg-neutral-200 hover:bg-danger hover:text-white rounded-lg transition-colors duration-200" data-id="${reward.id}">
+                                <i class="fa fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                rewardsContainer.appendChild(rewardCard);
+            });
+        }
+        
+        // 绑定事件监听器
+        function bindEventListeners() {
+            // 切换选项卡
+            eventsTabBtn.addEventListener('click', () => {
+                eventsTab.classList.remove('hidden');
+                rewardsTab.classList.add('hidden');
+                eventsTabBtn.classList.add('text-primary', 'border-b-2', 'border-primary');
+                eventsTabBtn.classList.remove('text-neutral-700');
+                rewardsTabBtn.classList.add('text-neutral-700');
+                rewardsTabBtn.classList.remove('text-primary', 'border-b-2', 'border-primary');
+            });
+            
+            rewardsTabBtn.addEventListener('click', () => {
+                eventsTab.classList.add('hidden');
+                rewardsTab.classList.remove('hidden');
+                eventsTabBtn.classList.remove('text-primary', 'border-b-2', 'border-primary');
+                eventsTabBtn.classList.add('text-neutral-700');
+                rewardsTabBtn.classList.remove('text-neutral-700');
+                rewardsTabBtn.classList.add('text-primary', 'border-b-2', 'border-primary');
+            });
+            
+            // 打开添加事件模态框
+            addEventBtn.addEventListener('click', () => {
+                // 重置表单
+                eventNameInput.value = '';
+                document.querySelector('input[name="eventType"][value="plus"]').checked = true;
+                eventPointBtns[0].classList.add('bg-primary', 'text-white', 'border-primary');
+                eventPointBtns[0].classList.remove('border-gray-300');
+                eventPointBtns[1].classList.remove('bg-primary', 'text-white', 'border-primary');
+                eventPointBtns[1].classList.add('border-gray-300');
+                eventPointBtns[2].classList.remove('bg-primary', 'text-white', 'border-primary');
+                eventPointBtns[2].classList.add('border-gray-300');
+                eventPointsInput.value = '1';
+                
+                // 显示模态框
+                addEventModal.classList.remove('hidden');
+                setTimeout(() => {
+                    addEventModal.querySelector('div').classList.add('scale-100');
+                    addEventModal.querySelector('div').classList.remove('scale-95');
+                }, 10);
+            });
+            
+            // 打开添加奖励模态框
+            addRewardBtn.addEventListener('click', () => {
+                // 重置表单
+                rewardNameInput.value = '';
+                rewardPointsInput.value = '';
+                rewardDescriptionInput.value = '';
+                
+                // 显示模态框
+                addRewardModal.classList.remove('hidden');
+                setTimeout(() => {
+                    addRewardModal.querySelector('div').classList.add('scale-100');
+                    addRewardModal.querySelector('div').classList.remove('scale-95');
+                }, 10);
+            });
+            
+            // 关闭模态框
+            closeEventModal.addEventListener('click', closeEventModalFunc);
+            closeRewardModal.addEventListener('click', closeRewardModalFunc);
+            cancelEventBtn.addEventListener('click', closeEventModalFunc);
+            cancelRewardBtn.addEventListener('click', closeRewardModalFunc);
+            cancelDeleteBtn.addEventListener('click', closeDeleteModalFunc);
+            
+            // 选择积分值
+            eventPointBtns.forEach((btn, index) => {
+                btn.addEventListener('click', () => {
+                    // 重置所有按钮样式
+                    eventPointBtns.forEach(b => {
+                        b.classList.remove('bg-primary', 'text-white', 'border-primary');
+                        b.classList.add('border-gray-300');
+                    });
+                    
+                    // 设置当前按钮样式
+                    btn.classList.add('bg-primary', 'text-white', 'border-primary');
+                    btn.classList.remove('border-gray-300');
+                    
+                    // 更新隐藏字段的值
+                    eventPointsInput.value = index + 1;
+                });
+            });
+            
+            // 提交添加事件表单
+            addEventForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const name = eventNameInput.value.trim();
+                const type = document.querySelector('input[name="eventType"]:checked').value;
+                const points = parseInt(eventPointsInput.value);
+                
+                if (!name) {
+                    showToast('请输入事件名称', 'error');
+                    return;
+                }
+                
+                // 创建新事件
+                const newEvent = {
+                    id: Date.now(),
+                    name: name,
+                    points: type === 'plus' ? points : -points
+                };
+                
+                // 添加到数据中
+                appData.events.push(newEvent);
+                saveData();
+                renderEvents();
+                
+                // 关闭模态框
+                closeEventModalFunc();
+                
+                // 显示成功提示
+                showToast(`已添加事件: ${name}`, 'success');
+            });
+            
+            // 提交添加奖励表单
+            addRewardForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const name = rewardNameInput.value.trim();
+                const points = parseInt(rewardPointsInput.value);
+                const description = rewardDescriptionInput.value.trim();
+                
+                if (!name || isNaN(points) || points <= 0) {
+                    showToast('请输入有效的奖励名称和积分值', 'error');
+                    return;
+                }
+                
+                // 创建新奖励
+                const newReward = {
+                    id: Date.now(),
+                    name: name,
+                    points: points,
+                    description: description
+                };
+                
+                // 添加到数据中
+                appData.rewards.push(newReward);
+                saveData();
+                renderRewards();
+                
+                // 关闭模态框
+                closeRewardModalFunc();
+                
+                // 显示成功提示
+                showToast(`已添加奖励: ${name}`, 'success');
+            });
+            
+            // 应用事件（加分/减分）
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('apply-event-btn')) {
+                    const eventId = parseInt(e.target.dataset.id);
+                    const event = appData.events.find(e => e.id === eventId);
+                    
+                    if (event) {
+                        // 更新积分
+                        appData.totalPoints += event.points;
+                        saveData();
+                        updatePointsDisplay();
+                        
+                        // 显示提示
+                        const message = event.points > 0 
+                            ? `+${Math.abs(event.points)} 分 (${event.name})` 
+                            : `${event.points} 分 (${event.name})`;
+                        
+                        showToast(message, event.points > 0 ? 'success' : 'error');
+                        
+                        // 更新奖励列表（因为积分变化可能影响兑换状态）
+                        renderRewards();
+                    }
+                }
+            });
+            
+            // 兑换奖励
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('redeem-reward-btn') && !e.target.disabled) {
+                    const rewardId = parseInt(e.target.dataset.id);
+                    const reward = appData.rewards.find(r => r.id === rewardId);
+                    
+                    if (reward && appData.totalPoints >= reward.points) {
+                        // 确认对话框
+                        if (confirm(`确定要兑换 "${reward.name}" 吗？将消耗 ${reward.points} 积分。`)) {
+                            // 更新积分
+                            appData.totalPoints -= reward.points;
+                            saveData();
+                            updatePointsDisplay();
+                            
+                            // 从奖励列表中移除
+                            appData.rewards = appData.rewards.filter(r => r.id !== rewardId);
+                            saveData();
+                            
+                            // 重新渲染界面
+                            renderRewards();
+                            
+                            // 显示成功提示
+                            showToast(`已成功兑换: ${reward.name}`, 'success');
+                        }
+                    }
+                }
+            });
+            
+            // 删除事件
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('delete-event-btn') || 
+                    e.target.parentElement.classList.contains('delete-event-btn')) {
+                    
+                    const btn = e.target.classList.contains('delete-event-btn') 
+                        ? e.target 
+                        : e.target.parentElement;
+                    
+                    const eventId = parseInt(btn.dataset.id);
+                    const event = appData.events.find(e => e.id === eventId);
+                    
+                    if (event) {
+                        currentDeleteId = eventId;
+                        currentDeleteType = 'event';
+                        
+                        deleteModalTitle.textContent = '删除事件';
+                        deleteModalMessage.textContent = `确定要删除事件 "${event.name}" 吗？`;
+                        
+                        // 显示确认对话框
+                        deleteModal.classList.remove('hidden');
+                        setTimeout(() => {
+                            deleteModal.querySelector('div').classList.add('scale-100');
+                            deleteModal.querySelector('div').classList.remove('scale-95');
+                        }, 10);
+                    }
+                }
+            });
+            
+            // 删除奖励
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('delete-reward-btn') || 
+                    e.target.parentElement.classList.contains('delete-reward-btn')) {
+                    
+                    const btn = e.target.classList.contains('delete-reward-btn') 
+                        ? e.target 
+                        : e.target.parentElement;
+                    
+                    const rewardId = parseInt(btn.dataset.id);
+                    const reward = appData.rewards.find(r => r.id === rewardId);
+                    
+                    if (reward) {
+                        currentDeleteId = rewardId;
+                        currentDeleteType = 'reward';
+                        
+                        deleteModalTitle.textContent = '删除奖励';
+                        deleteModalMessage.textContent = `确定要删除奖励 "${reward.name}" 吗？`;
+                        
+                        // 显示确认对话框
+                        deleteModal.classList.remove('hidden');
+                        setTimeout(() => {
+                            deleteModal.querySelector('div').classList.add('scale-100');
+                            deleteModal.querySelector('div').classList.remove('scale-95');
+                        }, 10);
+                    }
+                }
+            });
+            
+            // 确认删除
+            confirmDeleteBtn.addEventListener('click', () => {
+                if (currentDeleteType === 'event') {
+                    // 删除事件
+                    appData.events = appData.events.filter(e => e.id !== currentDeleteId);
+                    saveData();
+                    renderEvents();
+                    showToast('事件已删除', 'success');
+                } else if (currentDeleteType === 'reward') {
+                    // 删除奖励
+                    appData.rewards = appData.rewards.filter(r => r.id !== currentDeleteId);
+                    saveData();
+                    renderRewards();
+                    showToast('奖励已删除', 'success');
+                }
+                
+                // 重置并关闭确认对话框
+                currentDeleteId = null;
+                currentDeleteType = null;
+                closeDeleteModalFunc();
+            });
+        }
+        
+        // 关闭事件模态框
+        function closeEventModalFunc() {
+            addEventModal.querySelector('div').classList.remove('scale-100');
+            addEventModal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                addEventModal.classList.add('hidden');
+            }, 200);
+        }
+        
+        // 关闭奖励模态框
+        function closeRewardModalFunc() {
+            addRewardModal.querySelector('div').classList.remove('scale-100');
+            addRewardModal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                addRewardModal.classList.add('hidden');
+            }, 200);
+        }
+        
+        // 关闭删除确认模态框
+        function closeDeleteModalFunc() {
+            deleteModal.querySelector('div').classList.remove('scale-100');
+            deleteModal.querySelector('div').classList.add('scale-95');
+            setTimeout(() => {
+                deleteModal.classList.add('hidden');
+            }, 200);
+        }
+        
+        // 显示提示消息
+        function showToast(message, type = 'success') {
+            toastMessage.textContent = message;
+            
+            // 设置图标和颜色
+            if (type === 'success') {
+                toastIcon.className = 'fa fa-check-circle mr-2';
+                toast.classList.remove('bg-red-600');
+                toast.classList.add('bg-green-600');
+            } else {
+                toastIcon.className = 'fa fa-exclamation-circle mr-2';
+                toast.classList.remove('bg-green-600');
+                toast.classList.add('bg-red-600');
+            }
+            
+            // 显示提示
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+            
+            // 3秒后隐藏
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 3000);
+        }
+        
+        // 初始化应用
+        initApp();
+    </script>
+</body>
+</html>
