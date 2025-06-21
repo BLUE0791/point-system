@@ -14,7 +14,8 @@
     }
   ],
   "start_url": "index.html",
-  "display": "standalone",
+  "display": "standalone", // 关键！让页面像独立App一样启动
   "background_color": "#ffffff",
-  "theme_color": "#165DFF"
+  "theme_color": "#165DFF",
+  "orientation": "portrait"
 }
