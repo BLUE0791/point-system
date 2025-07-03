@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>积分奖励系统</title>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
@@ -34,12 +34,14 @@
             margin: 0;
             padding: 0;
             font-family: 'Noto Sans SC', sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
         
         body {
             background: linear-gradient(135deg, #f5f7fa 0%, #e4e7f1 100%);
             min-height: 100vh;
             padding-bottom: 40px;
+            touch-action: manipulation;
         }
         
         .card {
@@ -62,6 +64,7 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
+            min-height: 44px;
         }
         
         .btn:hover {
@@ -132,6 +135,7 @@
             z-index: 1000;
             justify-content: center;
             align-items: center;
+            touch-action: none;
         }
         
         .modal-content {
@@ -156,6 +160,7 @@
             border-bottom: 3px solid transparent;
             transition: all 0.3s;
             cursor: pointer;
+            min-height: 44px;
         }
         
         .tab-button.active {
@@ -178,6 +183,7 @@
             opacity: 0;
             transition: opacity 0.3s;
             z-index: 2000;
+            min-height: 44px;
         }
         
         .toast.show {
@@ -199,7 +205,7 @@
         }
         
         .currency-mop {
-            background: #A0D468;
+            background: '#A0D468';
             color: white;
         }
         
@@ -217,12 +223,24 @@
             border: 2px solid #e0e0e0;
             cursor: pointer;
             transition: all 0.2s;
+            min-height: 44px;
         }
         
         .event-point-btn.active {
             background: #6FC0DE;
             color: white;
             border-color: #6FC0DE;
+        }
+        
+        /* 移动端优化 */
+        button, .btn, .event-point-btn, .close-modal, 
+        .apply-event-btn, .delete-btn, .redeem-btn,
+        .add-record-btn, .view-records-btn, .tab-button {
+            touch-action: manipulation;
+        }
+        
+        input, select, textarea {
+            font-size: 16px; /* 防止iOS缩放 */
         }
     </style>
 </head>
@@ -1071,8 +1089,13 @@
                 }
             });
             
-            // 事件委托处理动态元素
-            document.addEventListener('click', (e) => {
+            // 移动端事件处理函数
+            const handleMobileEvent = (e) => {
+                // 阻止移动端默认行为
+                if (e.type === 'touchend') {
+                    e.preventDefault();
+                }
+                
                 // 应用事件
                 if (e.target.classList.contains('apply-event-btn') || 
                     e.target.closest('.apply-event-btn')) {
@@ -1168,7 +1191,11 @@
                         document.getElementById('addSavingRecordModal').style.display = 'flex';
                     }
                 }
-            });
+            };
+            
+            // 同时监听点击和触摸事件
+            document.addEventListener('click', handleMobileEvent);
+            document.addEventListener('touchend', handleMobileEvent);
             
             // 确认删除
             document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
