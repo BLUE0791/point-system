@@ -258,21 +258,8 @@
         html {
             touch-action: manipulation;
         }
-        
-        /* 响应式布局调整 */
-        @media (max-width: 768px) {
-            .container {
-                padding-left: 1rem;
-                padding-right: 1rem;
-            }
-            .flex {
-                flex-wrap: wrap;
-            }
-            .flex-1 {
-                min-width: 100%;
-                margin-bottom: 0.5rem;
-            }
-        }
+
+        /* 移除导致竖排的响应式代码，确保三栏始终横排 */
     </style>
 </head>
 <body>
@@ -300,7 +287,7 @@
 
         <!-- 主内容区 -->
         <main class="container mx-auto px-4 py-6">
-            <!-- 选项卡导航 -->
+            <!-- 选项卡导航（始终横排） -->
             <div class="flex bg-white rounded-xl mb-6 shadow-sm">
                 <button id="eventsTabBtn" class="tab-button flex-1 active">事件</button>
                 <button id="rewardsTabBtn" class="tab-button flex-1">奖励</button>
@@ -623,7 +610,7 @@
             // 加载本地存储的数据
             loadData();
             
-            // 兼容处理：确保旧数据结构正确（示例：添加新字段时不影响旧数据）
+            // 兼容处理：确保旧数据结构正确
             appData.events.forEach(event => {
                 if (!event.hasOwnProperty('createdAt')) {
                     event.createdAt = new Date().toISOString();
