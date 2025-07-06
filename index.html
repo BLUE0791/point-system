@@ -65,6 +65,7 @@
             justify-content: center;
             cursor: pointer;
             min-height: 44px;
+            user-select: none;
         }
         
         .btn:hover {
@@ -161,6 +162,7 @@
             transition: all 0.3s;
             cursor: pointer;
             min-height: 44px;
+            user-select: none;
         }
         
         .tab-button.active {
@@ -224,6 +226,7 @@
             cursor: pointer;
             transition: all 0.2s;
             min-height: 44px;
+            user-select: none;
         }
         
         .event-point-btn.active {
@@ -241,6 +244,11 @@
         
         input, select, textarea {
             font-size: 16px; /* 防止iOS缩放 */
+        }
+        
+        /* 修复移动端点击延迟 */
+        html {
+            touch-action: manipulation;
         }
     </style>
 </head>
@@ -589,6 +597,9 @@
             
             // 绑定事件监听器
             bindEventListeners();
+            
+            // 绑定动态元素的事件
+            setupDynamicEventHandlers();
         }
         
         // 从本地存储加载数据
@@ -1089,16 +1100,49 @@
                 }
             });
             
-            // 移动端事件处理函数
-            const handleMobileEvent = (e) => {
-                // 阻止移动端默认行为
-                if (e.type === 'touchend') {
-                    e.preventDefault();
+            // 确认删除
+            document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+                if (currentDeleteId && currentDeleteType) {
+                    if (currentDeleteType === 'event') {
+                        appData.events = appData.events.filter(e => e.id !== currentDeleteId);
+                        renderEvents();
+                    } else if (currentDeleteType === 'reward') {
+                        appData.rewards = appData.rewards.filter(r => r.id !== currentDeleteId);
+                        renderRewards();
+                    } else if (currentDeleteType === 'saving') {
+                        appData.savings = appData.savings.filter(s => s.id !== currentDeleteId);
+                        renderSavings();
+                        updateSavingsDisplay();
+                    }
+                    
+                    saveData();
+                    showToast('删除成功');
+                    document.getElementById('deleteModal').style.display = 'none';
+                    
+                    // 重置删除状态
+                    currentDeleteId = null;
+                    currentDeleteType = null;
                 }
-                
+            });
+            
+            // 添加新记录按钮（在记录查看模态框中）
+            document.getElementById('addNewRecordBtn').addEventListener('click', () => {
+                const saving = appData.savings.find(s => s.id === currentSavingId);
+                if (saving) {
+                    document.getElementById('savingRecordTitle').textContent = `添加记录 - ${saving.name}`;
+                    document.getElementById('currentSavingId').value = currentSavingId;
+                    document.getElementById('viewSavingRecordsModal').style.display = 'none';
+                    document.getElementById('addSavingRecordModal').style.display = 'flex';
+                }
+            });
+        }
+        
+        // 为动态生成的元素绑定事件
+        function setupDynamicEventHandlers() {
+            // 使用更可靠的委托方式
+            document.body.addEventListener('pointerdown', function(e) {
                 // 应用事件
-                if (e.target.classList.contains('apply-event-btn') || 
-                    e.target.closest('.apply-event-btn')) {
+                if (e.target.closest('.apply-event-btn')) {
                     const btn = e.target.closest('.apply-event-btn');
                     const eventId = btn.dataset.id;
                     const event = appData.events.find(ev => ev.id === eventId);
@@ -1108,11 +1152,11 @@
                         saveData();
                         showToast(`成功${event.points > 0 ? '获得' : '扣除'} ${Math.abs(event.points)} 积分`);
                     }
+                    return;
                 }
                 
                 // 删除按钮
-                if (e.target.classList.contains('delete-btn') || 
-                    e.target.closest('.delete-btn')) {
+                if (e.target.closest('.delete-btn')) {
                     const btn = e.target.closest('.delete-btn');
                     const id = btn.dataset.id;
                     const type = btn.dataset.type;
@@ -1140,11 +1184,11 @@
                     document.getElementById('deleteModalTitle').textContent = title;
                     document.getElementById('deleteModalMessage').textContent = message;
                     document.getElementById('deleteModal').style.display = 'flex';
+                    return;
                 }
                 
                 // 兑换奖励
-                if (e.target.classList.contains('redeem-btn') || 
-                    e.target.closest('.redeem-btn')) {
+                if (e.target.closest('.redeem-btn')) {
                     const btn = e.target.closest('.redeem-btn');
                     const rewardId = btn.dataset.id;
                     const reward = appData.rewards.find(r => r.id === rewardId);
@@ -1154,11 +1198,11 @@
                         saveData();
                         showToast(`成功兑换 "${reward.name}"`);
                     }
+                    return;
                 }
                 
                 // 添加攒钱记录
-                if (e.target.classList.contains('add-record-btn') || 
-                    e.target.closest('.add-record-btn')) {
+                if (e.target.closest('.add-record-btn')) {
                     const btn = e.target.closest('.add-record-btn');
                     const savingId = btn.dataset.id;
                     currentSavingId = savingId;
@@ -1169,56 +1213,17 @@
                         document.getElementById('savingRecordTitle').textContent = `添加记录 - ${saving.name}`;
                         document.getElementById('addSavingRecordModal').style.display = 'flex';
                     }
+                    return;
                 }
                 
                 // 查看攒钱记录
-                if (e.target.classList.contains('view-records-btn') || 
-                    e.target.closest('.view-records-btn')) {
+                if (e.target.closest('.view-records-btn')) {
                     const btn = e.target.closest('.view-records-btn');
                     const savingId = btn.dataset.id;
                     currentSavingId = savingId;
                     renderSavingRecords(savingId);
                     document.getElementById('viewSavingRecordsModal').style.display = 'flex';
-                }
-                
-                // 添加新记录按钮（在记录查看模态框中）
-                if (e.target.id === 'addNewRecordBtn') {
-                    const saving = appData.savings.find(s => s.id === currentSavingId);
-                    if (saving) {
-                        document.getElementById('savingRecordTitle').textContent = `添加记录 - ${saving.name}`;
-                        document.getElementById('currentSavingId').value = currentSavingId;
-                        document.getElementById('viewSavingRecordsModal').style.display = 'none';
-                        document.getElementById('addSavingRecordModal').style.display = 'flex';
-                    }
-                }
-            };
-            
-            // 同时监听点击和触摸事件
-            document.addEventListener('click', handleMobileEvent);
-            document.addEventListener('touchend', handleMobileEvent);
-            
-            // 确认删除
-            document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
-                if (currentDeleteId && currentDeleteType) {
-                    if (currentDeleteType === 'event') {
-                        appData.events = appData.events.filter(e => e.id !== currentDeleteId);
-                        renderEvents();
-                    } else if (currentDeleteType === 'reward') {
-                        appData.rewards = appData.rewards.filter(r => r.id !== currentDeleteId);
-                        renderRewards();
-                    } else if (currentDeleteType === 'saving') {
-                        appData.savings = appData.savings.filter(s => s.id !== currentDeleteId);
-                        renderSavings();
-                        updateSavingsDisplay();
-                    }
-                    
-                    saveData();
-                    showToast('删除成功');
-                    document.getElementById('deleteModal').style.display = 'none';
-                    
-                    // 重置删除状态
-                    currentDeleteId = null;
-                    currentDeleteType = null;
+                    return;
                 }
             });
         }
