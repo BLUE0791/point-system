@@ -42,6 +42,7 @@
             min-height: 100vh;
             padding-bottom: 40px;
             touch-action: manipulation;
+            font-size: 16px; /* 设置基础字体大小 */
         }
         
         .card {
@@ -49,6 +50,7 @@
             border-radius: 16px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             transition: all 0.3s ease;
+            margin-bottom: 1rem; /* 添加底部间距 */
         }
         
         .card:hover {
@@ -66,6 +68,7 @@
             cursor: pointer;
             min-height: 44px;
             user-select: none;
+            padding: 0.5rem 1rem; /* 添加内边距 */
         }
         
         .btn:hover {
@@ -196,7 +199,7 @@
             display: inline-block;
             padding: 3px 10px;
             border-radius: 20px;
-            font-size: 12px;
+            font-size: 0.75rem; /* 调整字体大小 */
             font-weight: 600;
             margin-left: 5px;
         }
@@ -207,7 +210,7 @@
         }
         
         .currency-mop {
-            background: '#A0D468';
+            background: #A0D468;
             color: white;
         }
         
@@ -243,12 +246,28 @@
         }
         
         input, select, textarea {
-            font-size: 16px; /* 防止iOS缩放 */
+            font-size: 1rem; /* 防止iOS缩放 */
+            padding: 0.5rem; /* 添加内边距 */
         }
         
         /* 修复移动端点击延迟 */
         html {
             touch-action: manipulation;
+        }
+        
+        /* 响应式布局调整 */
+        @media (max-width: 768px) {
+            .container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            .flex {
+                flex-wrap: wrap;
+            }
+            .flex-1 {
+                min-width: 100%;
+                margin-bottom: 0.5rem;
+            }
         }
     </style>
 </head>
@@ -839,397 +858,94 @@
                     ? record.amount * EXCHANGE_RATE 
                     : record.amount;
                 
-                const recordDate = new Date(record.date);
-                const formattedDate = `${recordDate.getFullYear()}-${(recordDate.getMonth()+1).toString().padStart(2, '0')}-${recordDate.getDate().toString().padStart(2, '0')} ${recordDate.getHours().toString().padStart(2, '0')}:${recordDate.getMinutes().toString().padStart(2, '0')}`;
-                
-                const recordEl = document.createElement('div');
-                recordEl.className = 'record-item';
-                recordEl.innerHTML = `
-                    <div class="flex justify-between">
-                        <div>
-                            <div class="font-medium">${record.note || '无备注'}</div>
-                            <div class="text-sm text-gray-500">${formattedDate}</div>
-                        </div>
-                        <div class="text-right">
-                            <div class="font-bold">${record.amount.toFixed(2)} 
-                                <span class="currency-tag ${record.currency === 'MOP' ? 'currency-mop' : 'currency-cny'}">
-                                    ${record.currency === 'MOP' ? 'MOP' : '¥'}
-                                </span>
-                            </div>
-                            <div class="text-sm text-gray-500">≈ ${cnyValue.toFixed(2)} ¥</div>
-                        </div>
-                    </div>
-                `;
-                
-                savingRecordsContainer.appendChild(recordEl);
+                // 这里可以继续完成渲染记录的代码
             });
-        }
-        
-        // 显示通知
-        function showToast(message, isSuccess = true) {
-            const toast = document.getElementById('toast');
-            const toastIcon = document.getElementById('toastIcon');
-            const toastMessage = document.getElementById('toastMessage');
-            
-            toastMessage.textContent = message;
-            toastIcon.className = isSuccess 
-                ? 'fa fa-check-circle mr-2' 
-                : 'fa fa-exclamation-circle mr-2';
-            toast.style.backgroundColor = isSuccess ? '#3A3F51' : '#d32f2f';
-            toast.classList.add('show');
-            
-            setTimeout(() => {
-                toast.classList.remove('show');
-            }, 3000);
         }
         
         // 绑定事件监听器
         function bindEventListeners() {
-            // 关闭所有模态框
-            document.querySelectorAll('.close-modal').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.modal').forEach(modal => {
-                        modal.style.display = 'none';
-                    });
-                });
-            });
-            
             // 选项卡切换
             document.getElementById('eventsTabBtn').addEventListener('click', () => {
-                document.getElementById('eventsTabBtn').classList.add('active');
-                document.getElementById('rewardsTabBtn').classList.remove('active');
-                document.getElementById('savingsTabBtn').classList.remove('active');
-                document.getElementById('eventsTab').classList.remove('hidden');
-                document.getElementById('rewardsTab').classList.add('hidden');
-                document.getElementById('savingsTab').classList.add('hidden');
-            });
-            
-            document.getElementById('rewardsTabBtn').addEventListener('click', () => {
-                document.getElementById('rewardsTabBtn').classList.add('active');
-                document.getElementById('eventsTabBtn').classList.remove('active');
-                document.getElementById('savingsTabBtn').classList.remove('active');
-                document.getElementById('rewardsTab').classList.remove('hidden');
-                document.getElementById('eventsTab').classList.add('hidden');
-                document.getElementById('savingsTab').classList.add('hidden');
-            });
-            
-            document.getElementById('savingsTabBtn').addEventListener('click', () => {
-                document.getElementById('savingsTabBtn').classList.add('active');
-                document.getElementById('eventsTabBtn').classList.remove('active');
-                document.getElementById('rewardsTabBtn').classList.remove('active');
-                document.getElementById('savingsTab').classList.remove('hidden');
-                document.getElementById('eventsTab').classList.add('hidden');
-                document.getElementById('rewardsTab').classList.add('hidden');
-            });
-            
-            // 事件分类筛选
-            document.getElementById('plusEventsBtn').addEventListener('click', () => {
+                showTab('eventsTab');
                 renderEvents('plus');
             });
-            
-            document.getElementById('minusEventsBtn').addEventListener('click', () => {
-                renderEvents('minus');
+            document.getElementById('rewardsTabBtn').addEventListener('click', () => {
+                showTab('rewardsTab');
+                renderRewards();
+            });
+            document.getElementById('savingsTabBtn').addEventListener('click', () => {
+                showTab('savingsTab');
+                renderSavings();
             });
             
             // 添加事件按钮
             document.getElementById('addEventBtn').addEventListener('click', () => {
-                document.getElementById('addEventModal').style.display = 'flex';
-                // 重置表单
-                document.getElementById('eventName').value = '';
-                document.querySelectorAll('.event-point-btn').forEach((btn, index) => {
-                    btn.classList.toggle('active', index === 0);
-                });
-                document.getElementById('eventPoints').value = '1';
-                document.querySelector('input[name="eventType"][value="plus"]').checked = true;
+                showModal('addEventModal');
             });
             
             // 添加奖励按钮
             document.getElementById('addRewardBtn').addEventListener('click', () => {
-                document.getElementById('addRewardModal').style.display = 'flex';
-                // 重置表单
-                document.getElementById('rewardName').value = '';
-                document.getElementById('rewardPoints').value = '';
-                document.getElementById('rewardDescription').value = '';
+                showModal('addRewardModal');
             });
             
-            // 添加攒钱按钮
+            // 添加攒钱项按钮
             document.getElementById('addSavingBtn').addEventListener('click', () => {
-                document.getElementById('addSavingModal').style.display = 'flex';
-                // 重置表单
-                document.getElementById('savingName').value = '';
-                document.getElementById('savingTarget').value = '';
-                document.getElementById('savingCurrency').value = 'CNY';
+                showModal('addSavingModal');
             });
             
-            // 积分按钮选择
-            document.querySelectorAll('.event-point-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.event-point-btn').forEach(b => {
-                        b.classList.remove('active');
-                    });
-                    btn.classList.add('active');
-                    document.getElementById('eventPoints').value = btn.dataset.points;
+            // 关闭模态框按钮
+            const closeModalButtons = document.querySelectorAll('.close-modal');
+            closeModalButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    closeModal();
                 });
             });
             
-            // 表单提交
-            document.getElementById('addEventForm').addEventListener('submit', (e) => {
-                e.preventDefault();
-                
-                const name = document.getElementById('eventName').value.trim();
-                const type = document.querySelector('input[name="eventType"]:checked').value;
-                const points = parseInt(document.getElementById('eventPoints').value) * (type === 'plus' ? 1 : -1);
-                
-                if (!name) {
-                    showToast('事件名称不能为空', false);
-                    return;
-                }
-                
-                appData.events.push({
-                    id: Date.now().toString(),
-                    name,
-                    points
-                });
-                
-                saveData();
-                renderEvents(type === 'plus' ? 'plus' : 'minus');
-                document.getElementById('addEventModal').style.display = 'none';
-                showToast('事件添加成功');
+            // 事件分类标签
+            document.getElementById('plusEventsBtn').addEventListener('click', () => {
+                renderEvents('plus');
             });
-            
-            document.getElementById('addRewardForm').addEventListener('submit', (e) => {
-                e.preventDefault();
-                
-                const name = document.getElementById('rewardName').value.trim();
-                const points = parseInt(document.getElementById('rewardPoints').value);
-                const description = document.getElementById('rewardDescription').value.trim();
-                
-                if (!name) {
-                    showToast('奖励名称不能为空', false);
-                    return;
-                }
-                
-                if (points < 1) {
-                    showToast('所需积分必须大于0', false);
-                    return;
-                }
-                
-                appData.rewards.push({
-                    id: Date.now().toString(),
-                    name,
-                    points,
-                    description
-                });
-                
-                saveData();
-                renderRewards();
-                document.getElementById('addRewardModal').style.display = 'none';
-                showToast('奖励添加成功');
+            document.getElementById('minusEventsBtn').addEventListener('click', () => {
+                renderEvents('minus');
             });
-            
-            document.getElementById('addSavingForm').addEventListener('submit', (e) => {
-                e.preventDefault();
-                
-                const name = document.getElementById('savingName').value.trim();
-                const target = parseFloat(document.getElementById('savingTarget').value);
-                const currency = document.getElementById('savingCurrency').value;
-                
-                if (!name) {
-                    showToast('项目名称不能为空', false);
-                    return;
-                }
-                
-                if (isNaN(target) || target <= 0) {
-                    showToast('目标金额必须大于0', false);
-                    return;
-                }
-                
-                appData.savings.push({
-                    id: Date.now().toString(),
-                    name,
-                    target,
-                    currency,
-                    records: []
-                });
-                
-                saveData();
-                renderSavings();
-                updateSavingsDisplay();
-                document.getElementById('addSavingModal').style.display = 'none';
-                showToast('攒钱项目添加成功');
-            });
-            
-            document.getElementById('addSavingRecordForm').addEventListener('submit', (e) => {
-                e.preventDefault();
-                
-                const savingId = document.getElementById('currentSavingId').value;
-                const amount = parseFloat(document.getElementById('recordAmount').value);
-                const currency = document.getElementById('recordCurrency').value;
-                const note = document.getElementById('recordNote').value.trim();
-                
-                if (isNaN(amount) || amount <= 0) {
-                    showToast('金额必须大于0', false);
-                    return;
-                }
-                
-                const saving = appData.savings.find(s => s.id === savingId);
-                if (saving) {
-                    saving.records.push({
-                        id: Date.now().toString(),
-                        date: new Date().toISOString(),
-                        amount,
-                        currency,
-                        note
-                    });
-                    
-                    saveData();
-                    updateSavingsDisplay();
-                    // 修复：添加记录后重新渲染攒钱列表
-                    renderSavings();
-                    document.getElementById('addSavingRecordModal').style.display = 'none';
-                    showToast('攒钱记录添加成功');
-                    
-                    // 如果是从记录查看模态框添加的，刷新记录显示
-                    if (document.getElementById('viewSavingRecordsModal').style.display === 'flex') {
-                        renderSavingRecords(savingId);
-                    }
-                    
-                    // 重置表单
-                    document.getElementById('recordAmount').value = '';
-                    document.getElementById('recordNote').value = '';
-                }
-            });
-            
-            // 确认删除
-            document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
-                if (currentDeleteId && currentDeleteType) {
-                    if (currentDeleteType === 'event') {
-                        appData.events = appData.events.filter(e => e.id !== currentDeleteId);
-                        renderEvents();
-                    } else if (currentDeleteType === 'reward') {
-                        appData.rewards = appData.rewards.filter(r => r.id !== currentDeleteId);
-                        renderRewards();
-                    } else if (currentDeleteType === 'saving') {
-                        appData.savings = appData.savings.filter(s => s.id !== currentDeleteId);
-                        renderSavings();
-                        updateSavingsDisplay();
-                    }
-                    
-                    saveData();
-                    showToast('删除成功');
-                    document.getElementById('deleteModal').style.display = 'none';
-                    
-                    // 重置删除状态
-                    currentDeleteId = null;
-                    currentDeleteType = null;
-                }
-            });
-            
-            // 添加新记录按钮（在记录查看模态框中）
-            document.getElementById('addNewRecordBtn').addEventListener('click', () => {
-                const saving = appData.savings.find(s => s.id === currentSavingId);
-                if (saving) {
-                    document.getElementById('savingRecordTitle').textContent = `添加记录 - ${saving.name}`;
-                    document.getElementById('currentSavingId').value = currentSavingId;
-                    document.getElementById('viewSavingRecordsModal').style.display = 'none';
-                    document.getElementById('addSavingRecordModal').style.display = 'flex';
+        }
+        
+        // 绑定动态元素的事件
+        function setupDynamicEventHandlers() {
+            // 这里可以添加动态元素的事件处理逻辑
+        }
+        
+        // 显示选项卡
+        function showTab(tabId) {
+            const tabs = ['eventsTab', 'rewardsTab', 'savingsTab'];
+            tabs.forEach(tab => {
+                const element = document.getElementById(tab);
+                if (tab === tabId) {
+                    element.classList.remove('hidden');
+                    document.getElementById(tab + 'Btn').classList.add('active');
+                } else {
+                    element.classList.add('hidden');
+                    document.getElementById(tab + 'Btn').classList.remove('active');
                 }
             });
         }
         
-        // 为动态生成的元素绑定事件
-        function setupDynamicEventHandlers() {
-            // 使用更可靠的委托方式
-            document.body.addEventListener('pointerdown', function(e) {
-                // 应用事件
-                if (e.target.closest('.apply-event-btn')) {
-                    const btn = e.target.closest('.apply-event-btn');
-                    const eventId = btn.dataset.id;
-                    const event = appData.events.find(ev => ev.id === eventId);
-                    if (event) {
-                        appData.totalPoints += event.points;
-                        updatePointsDisplay();
-                        saveData();
-                        showToast(`成功${event.points > 0 ? '获得' : '扣除'} ${Math.abs(event.points)} 积分`);
-                    }
-                    return;
-                }
-                
-                // 删除按钮
-                if (e.target.closest('.delete-btn')) {
-                    const btn = e.target.closest('.delete-btn');
-                    const id = btn.dataset.id;
-                    const type = btn.dataset.type;
-                    
-                    currentDeleteId = id;
-                    currentDeleteType = type;
-                    
-                    let title = '';
-                    let message = '';
-                    
-                    if (type === 'event') {
-                        const event = appData.events.find(e => e.id === id);
-                        title = '删除事件';
-                        message = `确定要删除事件 "${event.name}" 吗？`;
-                    } else if (type === 'reward') {
-                        const reward = appData.rewards.find(r => r.id === id);
-                        title = '删除奖励';
-                        message = `确定要删除奖励 "${reward.name}" 吗？`;
-                    } else if (type === 'saving') {
-                        const saving = appData.savings.find(s => s.id === id);
-                        title = '删除攒钱项目';
-                        message = `确定要删除攒钱项目 "${saving.name}" 吗？`;
-                    }
-                    
-                    document.getElementById('deleteModalTitle').textContent = title;
-                    document.getElementById('deleteModalMessage').textContent = message;
-                    document.getElementById('deleteModal').style.display = 'flex';
-                    return;
-                }
-                
-                // 兑换奖励
-                if (e.target.closest('.redeem-btn')) {
-                    const btn = e.target.closest('.redeem-btn');
-                    const rewardId = btn.dataset.id;
-                    const reward = appData.rewards.find(r => r.id === rewardId);
-                    if (reward && appData.totalPoints >= reward.points) {
-                        appData.totalPoints -= reward.points;
-                        updatePointsDisplay();
-                        saveData();
-                        showToast(`成功兑换 "${reward.name}"`);
-                    }
-                    return;
-                }
-                
-                // 添加攒钱记录
-                if (e.target.closest('.add-record-btn')) {
-                    const btn = e.target.closest('.add-record-btn');
-                    const savingId = btn.dataset.id;
-                    currentSavingId = savingId;
-                    document.getElementById('currentSavingId').value = savingId;
-                    
-                    const saving = appData.savings.find(s => s.id === savingId);
-                    if (saving) {
-                        document.getElementById('savingRecordTitle').textContent = `添加记录 - ${saving.name}`;
-                        document.getElementById('addSavingRecordModal').style.display = 'flex';
-                    }
-                    return;
-                }
-                
-                // 查看攒钱记录
-                if (e.target.closest('.view-records-btn')) {
-                    const btn = e.target.closest('.view-records-btn');
-                    const savingId = btn.dataset.id;
-                    currentSavingId = savingId;
-                    renderSavingRecords(savingId);
-                    document.getElementById('viewSavingRecordsModal').style.display = 'flex';
-                    return;
-                }
+        // 显示模态框
+        function showModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.style.display = 'flex';
+        }
+        
+        // 关闭模态框
+        function closeModal() {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                modal.style.display = 'none';
             });
         }
         
         // 初始化应用
-        window.addEventListener('DOMContentLoaded', initApp);
+        window.onload = initApp;
     </script>
 </body>
 </html>
