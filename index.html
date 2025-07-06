@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>积分奖励系统</title>
+    <!-- 缓存控制头：防止浏览器缓存旧版本代码 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -42,7 +46,7 @@
             min-height: 100vh;
             padding-bottom: 40px;
             touch-action: manipulation;
-            font-size: 16px; /* 设置基础字体大小 */
+            font-size: 16px;
         }
         
         .card {
@@ -50,7 +54,7 @@
             border-radius: 16px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             transition: all 0.3s ease;
-            margin-bottom: 1rem; /* 添加底部间距 */
+            margin-bottom: 1rem;
         }
         
         .card:hover {
@@ -68,7 +72,7 @@
             cursor: pointer;
             min-height: 44px;
             user-select: none;
-            padding: 0.5rem 1rem; /* 添加内边距 */
+            padding: 0.5rem 1rem;
         }
         
         .btn:hover {
@@ -199,7 +203,7 @@
             display: inline-block;
             padding: 3px 10px;
             border-radius: 20px;
-            font-size: 0.75rem; /* 调整字体大小 */
+            font-size: 0.75rem;
             font-weight: 600;
             margin-left: 5px;
         }
@@ -246,8 +250,8 @@
         }
         
         input, select, textarea {
-            font-size: 1rem; /* 防止iOS缩放 */
-            padding: 0.5rem; /* 添加内边距 */
+            font-size: 1rem;
+            padding: 0.5rem;
         }
         
         /* 修复移动端点击延迟 */
@@ -354,6 +358,18 @@
                     <button id="addSavingBtn" class="btn btn-warning px-5 py-2.5">
                         <i class="fa fa-piggy-bank mr-2"></i> 添加攒钱项
                     </button>
+                </div>
+                
+                <!-- 总攒钱金额显示 -->
+                <div class="bg-white rounded-xl p-4 mb-6 shadow-md">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-lg">总攒钱金额</h3>
+                        <div class="flex items-center">
+                            <i class="fa fa-money text-warning mr-2"></i>
+                            <span id="totalSavings" class="text-2xl font-bold">0.00</span>
+                            <span class="ml-1">¥</span>
+                        </div>
+                    </div>
                 </div>
                 
                 <!-- 攒钱列表容器 -->
@@ -607,6 +623,13 @@
             // 加载本地存储的数据
             loadData();
             
+            // 兼容处理：确保旧数据结构正确（示例：添加新字段时不影响旧数据）
+            appData.events.forEach(event => {
+                if (!event.hasOwnProperty('createdAt')) {
+                    event.createdAt = new Date().toISOString();
+                }
+            });
+            
             // 渲染界面
             renderEvents('plus');
             renderRewards();
@@ -629,7 +652,22 @@
                     appData = JSON.parse(savedData);
                 } catch (e) {
                     console.error('解析本地存储数据失败', e);
+                    appData = {
+                        totalPoints: 0,
+                        totalSavings: 0,
+                        events: [],
+                        rewards: [],
+                        savings: []
+                    };
                 }
+            } else {
+                appData = {
+                    totalPoints: 0,
+                    totalSavings: 0,
+                    events: [],
+                    rewards: [],
+                    savings: []
+                };
             }
         }
         
@@ -858,24 +896,84 @@
                     ? record.amount * EXCHANGE_RATE 
                     : record.amount;
                 
-                // 这里可以继续完成渲染记录的代码
+                const recordDate = new Date(record.date);
+                const formattedDate = `${recordDate.getFullYear()}-${(recordDate.getMonth()+1).toString().padStart(2, '0')}-${recordDate.getDate().toString().padStart(2, '0')} ${recordDate.getHours().toString().padStart(2, '0')}:${recordDate.getMinutes().toString().padStart(2, '0')}`;
+                
+                const recordEl = document.createElement('div');
+                recordEl.className = 'record-item';
+                recordEl.innerHTML = `
+                    <div class="flex justify-between">
+                        <div>
+                            <div class="font-medium">${record.note || '无备注'}</div>
+                            <div class="text-sm text-gray-500">${formattedDate}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-bold">${record.amount.toFixed(2)} 
+                                <span class="currency-tag ${record.currency === 'MOP' ? 'currency-mop' : 'currency-cny'}">
+                                    ${record.currency === 'MOP' ? 'MOP' : '¥'}
+                                </span>
+                            </div>
+                            <div class="text-sm text-gray-500">≈ ${cnyValue.toFixed(2)} ¥</div>
+                        </div>
+                    </div>
+                `;
+                
+                savingRecordsContainer.appendChild(recordEl);
             });
+        }
+        
+        // 显示通知
+        function showToast(message, isSuccess = true) {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toastIcon');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toastMessage.textContent = message;
+            toastIcon.className = isSuccess 
+                ? 'fa fa-check-circle mr-2' 
+                : 'fa fa-exclamation-circle mr-2';
+            toast.style.backgroundColor = isSuccess ? '#3A3F51' : '#d32f2f';
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
         }
         
         // 绑定事件监听器
         function bindEventListeners() {
+            // 关闭所有模态框
+            document.querySelectorAll('.close-modal').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.modal').forEach(modal => {
+                        modal.style.display = 'none';
+                    });
+                });
+            });
+            
             // 选项卡切换
             document.getElementById('eventsTabBtn').addEventListener('click', () => {
                 showTab('eventsTab');
                 renderEvents('plus');
             });
+            
             document.getElementById('rewardsTabBtn').addEventListener('click', () => {
                 showTab('rewardsTab');
                 renderRewards();
             });
+            
             document.getElementById('savingsTabBtn').addEventListener('click', () => {
                 showTab('savingsTab');
                 renderSavings();
+            });
+            
+            // 事件分类筛选
+            document.getElementById('plusEventsBtn').addEventListener('click', () => {
+                renderEvents('plus');
+            });
+            
+            document.getElementById('minusEventsBtn').addEventListener('click', () => {
+                renderEvents('minus');
             });
             
             // 添加事件按钮
@@ -893,26 +991,269 @@
                 showModal('addSavingModal');
             });
             
-            // 关闭模态框按钮
-            const closeModalButtons = document.querySelectorAll('.close-modal');
-            closeModalButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    closeModal();
+            // 积分按钮选择
+            document.querySelectorAll('.event-point-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.event-point-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    btn.classList.add('active');
+                    document.getElementById('eventPoints').value = btn.dataset.points;
                 });
             });
             
-            // 事件分类标签
-            document.getElementById('plusEventsBtn').addEventListener('click', () => {
-                renderEvents('plus');
+            // 表单提交
+            document.getElementById('addEventForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const name = document.getElementById('eventName').value.trim();
+                const type = document.querySelector('input[name="eventType"]:checked').value;
+                const points = parseInt(document.getElementById('eventPoints').value) * (type === 'plus' ? 1 : -1);
+                
+                if (!name) {
+                    showToast('事件名称不能为空', false);
+                    return;
+                }
+                
+                appData.events.push({
+                    id: Date.now().toString(),
+                    name,
+                    points
+                });
+                
+                saveData();
+                renderEvents(type === 'plus' ? 'plus' : 'minus');
+                document.getElementById('addEventModal').style.display = 'none';
+                showToast('事件添加成功');
             });
-            document.getElementById('minusEventsBtn').addEventListener('click', () => {
-                renderEvents('minus');
+            
+            document.getElementById('addRewardForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const name = document.getElementById('rewardName').value.trim();
+                const points = parseInt(document.getElementById('rewardPoints').value);
+                const description = document.getElementById('rewardDescription').value.trim();
+                
+                if (!name) {
+                    showToast('奖励名称不能为空', false);
+                    return;
+                }
+                
+                if (points < 1) {
+                    showToast('所需积分必须大于0', false);
+                    return;
+                }
+                
+                appData.rewards.push({
+                    id: Date.now().toString(),
+                    name,
+                    points,
+                    description
+                });
+                
+                saveData();
+                renderRewards();
+                document.getElementById('addRewardModal').style.display = 'none';
+                showToast('奖励添加成功');
+            });
+            
+            document.getElementById('addSavingForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const name = document.getElementById('savingName').value.trim();
+                const target = parseFloat(document.getElementById('savingTarget').value);
+                const currency = document.getElementById('savingCurrency').value;
+                
+                if (!name) {
+                    showToast('项目名称不能为空', false);
+                    return;
+                }
+                
+                if (isNaN(target) || target <= 0) {
+                    showToast('目标金额必须大于0', false);
+                    return;
+                }
+                
+                appData.savings.push({
+                    id: Date.now().toString(),
+                    name,
+                    target,
+                    currency,
+                    records: []
+                });
+                
+                saveData();
+                renderSavings();
+                updateSavingsDisplay();
+                document.getElementById('addSavingModal').style.display = 'none';
+                showToast('攒钱项目添加成功');
+            });
+            
+            document.getElementById('addSavingRecordForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const savingId = document.getElementById('currentSavingId').value;
+                const amount = parseFloat(document.getElementById('recordAmount').value);
+                const currency = document.getElementById('recordCurrency').value;
+                const note = document.getElementById('recordNote').value.trim();
+                
+                if (isNaN(amount) || amount <= 0) {
+                    showToast('金额必须大于0', false);
+                    return;
+                }
+                
+                const saving = appData.savings.find(s => s.id === savingId);
+                if (saving) {
+                    saving.records.push({
+                        id: Date.now().toString(),
+                        date: new Date().toISOString(),
+                        amount,
+                        currency,
+                        note
+                    });
+                    
+                    saveData();
+                    updateSavingsDisplay();
+                    renderSavings();
+                    document.getElementById('addSavingRecordModal').style.display = 'none';
+                    showToast('攒钱记录添加成功');
+                    
+                    // 如果是从记录查看模态框添加的，刷新记录显示
+                    if (document.getElementById('viewSavingRecordsModal').style.display === 'flex') {
+                        renderSavingRecords(savingId);
+                    }
+                    
+                    // 重置表单
+                    document.getElementById('recordAmount').value = '';
+                    document.getElementById('recordNote').value = '';
+                }
+            });
+            
+            // 确认删除
+            document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+                if (currentDeleteId && currentDeleteType) {
+                    if (currentDeleteType === 'event') {
+                        appData.events = appData.events.filter(e => e.id !== currentDeleteId);
+                        renderEvents();
+                    } else if (currentDeleteType === 'reward') {
+                        appData.rewards = appData.rewards.filter(r => r.id !== currentDeleteId);
+                        renderRewards();
+                    } else if (currentDeleteType === 'saving') {
+                        appData.savings = appData.savings.filter(s => s.id !== currentDeleteId);
+                        renderSavings();
+                        updateSavingsDisplay();
+                    }
+                    
+                    saveData();
+                    showToast('删除成功');
+                    document.getElementById('deleteModal').style.display = 'none';
+                    
+                    // 重置删除状态
+                    currentDeleteId = null;
+                    currentDeleteType = null;
+                }
+            });
+            
+            // 添加新记录按钮（在记录查看模态框中）
+            document.getElementById('addNewRecordBtn').addEventListener('click', () => {
+                const saving = appData.savings.find(s => s.id === currentSavingId);
+                if (saving) {
+                    document.getElementById('savingRecordTitle').textContent = `添加记录 - ${saving.name}`;
+                    document.getElementById('currentSavingId').value = currentSavingId;
+                    document.getElementById('viewSavingRecordsModal').style.display = 'none';
+                    document.getElementById('addSavingRecordModal').style.display = 'flex';
+                }
             });
         }
         
-        // 绑定动态元素的事件
+        // 为动态生成的元素绑定事件
         function setupDynamicEventHandlers() {
-            // 这里可以添加动态元素的事件处理逻辑
+            document.body.addEventListener('pointerdown', function(e) {
+                // 应用事件
+                if (e.target.closest('.apply-event-btn')) {
+                    const btn = e.target.closest('.apply-event-btn');
+                    const eventId = btn.dataset.id;
+                    const event = appData.events.find(ev => ev.id === eventId);
+                    if (event) {
+                        appData.totalPoints += event.points;
+                        updatePointsDisplay();
+                        saveData();
+                        showToast(`成功${event.points > 0 ? '获得' : '扣除'} ${Math.abs(event.points)} 积分`);
+                    }
+                    return;
+                }
+                
+                // 删除按钮
+                if (e.target.closest('.delete-btn')) {
+                    const btn = e.target.closest('.delete-btn');
+                    const id = btn.dataset.id;
+                    const type = btn.dataset.type;
+                    
+                    currentDeleteId = id;
+                    currentDeleteType = type;
+                    
+                    let title = '';
+                    let message = '';
+                    
+                    if (type === 'event') {
+                        const event = appData.events.find(e => e.id === id);
+                        title = '删除事件';
+                        message = `确定要删除事件 "${event.name}" 吗？`;
+                    } else if (type === 'reward') {
+                        const reward = appData.rewards.find(r => r.id === id);
+                        title = '删除奖励';
+                        message = `确定要删除奖励 "${reward.name}" 吗？`;
+                    } else if (type === 'saving') {
+                        const saving = appData.savings.find(s => s.id === id);
+                        title = '删除攒钱项目';
+                        message = `确定要删除攒钱项目 "${saving.name}" 吗？`;
+                    }
+                    
+                    document.getElementById('deleteModalTitle').textContent = title;
+                    document.getElementById('deleteModalMessage').textContent = message;
+                    document.getElementById('deleteModal').style.display = 'flex';
+                    return;
+                }
+                
+                // 兑换奖励
+                if (e.target.closest('.redeem-btn')) {
+                    const btn = e.target.closest('.redeem-btn');
+                    const rewardId = btn.dataset.id;
+                    const reward = appData.rewards.find(r => r.id === rewardId);
+                    if (reward && appData.totalPoints >= reward.points) {
+                        appData.totalPoints -= reward.points;
+                        updatePointsDisplay();
+                        saveData();
+                        showToast(`成功兑换 "${reward.name}"`);
+                    }
+                    return;
+                }
+                
+                // 添加攒钱记录
+                if (e.target.closest('.add-record-btn')) {
+                    const btn = e.target.closest('.add-record-btn');
+                    const savingId = btn.dataset.id;
+                    currentSavingId = savingId;
+                    document.getElementById('currentSavingId').value = savingId;
+                    
+                    const saving = appData.savings.find(s => s.id === savingId);
+                    if (saving) {
+                        document.getElementById('savingRecordTitle').textContent = `添加记录 - ${saving.name}`;
+                        document.getElementById('addSavingRecordModal').style.display = 'flex';
+                    }
+                    return;
+                }
+                
+                // 查看攒钱记录
+                if (e.target.closest('.view-records-btn')) {
+                    const btn = e.target.closest('.view-records-btn');
+                    const savingId = btn.dataset.id;
+                    currentSavingId = savingId;
+                    renderSavingRecords(savingId);
+                    document.getElementById('viewSavingRecordsModal').style.display = 'flex';
+                    return;
+                }
+            });
         }
         
         // 显示选项卡
@@ -920,12 +1261,13 @@
             const tabs = ['eventsTab', 'rewardsTab', 'savingsTab'];
             tabs.forEach(tab => {
                 const element = document.getElementById(tab);
+                const button = document.getElementById(tab + 'Btn');
                 if (tab === tabId) {
                     element.classList.remove('hidden');
-                    document.getElementById(tab + 'Btn').classList.add('active');
+                    button.classList.add('active');
                 } else {
                     element.classList.add('hidden');
-                    document.getElementById(tab + 'Btn').classList.remove('active');
+                    button.classList.remove('active');
                 }
             });
         }
@@ -936,16 +1278,8 @@
             modal.style.display = 'flex';
         }
         
-        // 关闭模态框
-        function closeModal() {
-            const modals = document.querySelectorAll('.modal');
-            modals.forEach(modal => {
-                modal.style.display = 'none';
-            });
-        }
-        
         // 初始化应用
-        window.onload = initApp;
+        window.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>
