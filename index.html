@@ -14,8 +14,8 @@
     
     <!-- 添加版本控制 -->
     <script>
-        // 版本控制代码
-        const APP_VERSION = "1.0.1";
+        // 版本控制代码 - 每次更新时修改这个版本号
+        const APP_VERSION = "1.0.2";
         const savedVersion = localStorage.getItem('appVersion');
         
         if (savedVersion !== APP_VERSION) {
@@ -321,8 +321,7 @@
                     <button id="minusEventsBtn" class="btn btn-danger px-5 py-2 flex-1">扣分事件</button>
                 </div>
                 
-                <!-- 事件列表容器 -->
-                <!-- 修改布局为单列 -->
+                <!-- 事件列表容器 - 确保始终单列 -->
                 <div id="eventsContainer" class="grid grid-cols-1 gap-4">
                     <!-- 事件卡片会动态生成在这里 -->
                     <div class="card p-5 text-center">
@@ -341,8 +340,7 @@
                     </button>
                 </div>
                 
-                <!-- 奖励列表容器 -->
-                <!-- 修改布局为单列 -->
+                <!-- 奖励列表容器 - 确保始终单列 -->
                 <div id="rewardsContainer" class="grid grid-cols-1 gap-4">
                     <!-- 奖励卡片会动态生成在这里 -->
                     <div class="card p-5 text-center">
@@ -373,7 +371,7 @@
                     </div>
                 </div>
                 
-                <!-- 攒钱列表容器 -->
+                <!-- 攒钱列表容器 - 确保始终单列 -->
                 <div id="savingsContainer" class="grid grid-cols-1 gap-4">
                     <!-- 攒钱卡片会动态生成在这里 -->
                     <div class="card p-5 text-center">
@@ -513,7 +511,7 @@
         <div class="modal-content">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-gray-800" id="savingRecordTitle">添加攒钱记录</h3>
+                    <h3 class="text-xl font-bold text-gray-800" id="savingRecordTitle">添加攒钱记录</h极>
                     <button class="text-gray-500 hover:text-gray-700 close-modal">
                         <i class="fa fa-times"></i>
                     </button>
@@ -522,7 +520,7 @@
                 <form id="addSavingRecordForm">
                     <div class="mb-4">
                         <label class="block text-gray-700 mb-2">攒钱金额</label>
-                        <input type="number" id="recordAmount" min="0.01" step="0.01" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-warning focus:border-transparent" placeholder="例如：200.00" required>
+                        <input type="number" id="recordAmount" min="0.01" step="0.01" class="w-full px-4 py极3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-warning focus:border-transparent" placeholder="例如：200.00" required>
                     </div>
                     
                     <div class="mb-4">
@@ -744,7 +742,7 @@
                             <button class="delete-btn w-12 py-2.5 bg-gray-100 hover:bg-danger hover:text-white rounded-xl" data-type="event" data-id="${event.id}">
                                 <i class="fa fa-trash"></i>
                             </button>
-                        </div>
+                        </极>
                     </div>
                 `;
                 
@@ -1046,7 +1044,7 @@
                 }
                 
                 appData.rewards.push({
-                    id: Date.now().toString(),
+                    id极 Date.now().toString(),
                     name,
                     points,
                     description
