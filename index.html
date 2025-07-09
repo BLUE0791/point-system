@@ -18,7 +18,7 @@
     <!-- 添加版本控制 -->
     <script>
         // 版本控制代码 - 每次更新时修改这个版本号
-        const APP_VERSION = "1.0.3";
+        const APP_VERSION = "1.0.5";
         const savedVersion = localStorage.getItem('appVersion');
         
         if (savedVersion !== APP_VERSION) {
@@ -113,7 +113,7 @@
         }
         
         .btn-success {
-            background: linear-gradient(to极 right, #45CFF9, #48CFAD);
+            background: linear-gradient(to right, #45CFF9, #48CFAD);
             color: white;
             border: none;
         }
@@ -213,7 +213,7 @@
             opacity: 0;
             transition: opacity 0.3s;
             z-index: 2000;
-            min-height: 44极;
+            min-height: 44px;
         }
         
         .toast.show {
@@ -235,7 +235,7 @@
         }
         
         .currency-mop {
-            background: #A0D468;
+            background: '#A0D468';
             color: white;
         }
         
@@ -351,7 +351,7 @@
                 <div id="rewardsContainer" class="grid grid-cols-1 gap-4">
                     <!-- 奖励卡片会动态生成在这里 -->
                     <div class="card p-5 text-center">
-                        <i class="fa fa-gift text-4xl text-gray-300 mb-3"></极>
+                        <i class="fa fa-gift text-4xl text-gray-300 mb-3"></i>
                         <p class="text-gray-500">暂无奖励，点击"添加奖励"按钮创建</p>
                     </div>
                 </div>
@@ -372,7 +372,7 @@
                         <h3 class="font-bold text-lg">总攒钱金额</h3>
                         <div class="flex items-center">
                             <i class="fa fa-money text-warning mr-2"></i>
-                            <span id="totalSavings" class="text-2xl font-bold">0.00</span>
+                            <span id="totalSavingsTab" class="text-2xl font-bold">0.00</span>
                             <span class="ml-1">¥</span>
                         </div>
                     </div>
@@ -626,31 +626,36 @@
         
         // 初始化应用
         function initApp() {
-            // 加载本地存储的数据
-            loadData();
-            
-            // 兼容处理：确保旧数据结构正确
-            appData.events.forEach(event => {
-                if (!event.hasOwnProperty('createdAt')) {
-                    event.createdAt = new Date().toISOString();
-                }
-            });
-            
-            // 渲染界面
-            renderEvents('plus');
-            renderRewards();
-            renderSavings();
-            updatePointsDisplay();
-            updateSavingsDisplay();
-            
-            // 绑定事件监听器
-            bindEventListeners();
-            
-            // 绑定动态元素的事件
-            setupDynamicEventHandlers();
-            
-            // 注册Service Worker
-            registerServiceWorker();
+            try {
+                // 加载本地存储的数据
+                loadData();
+                
+                // 兼容处理：确保旧数据结构正确
+                appData.events.forEach(event => {
+                    if (!event.hasOwnProperty('createdAt')) {
+                        event.createdAt = new Date().toISOString();
+                    }
+                });
+                
+                // 渲染界面
+                renderEvents('plus');
+                renderRewards();
+                renderSavings();
+                updatePointsDisplay();
+                updateSavingsDisplay();
+                
+                // 绑定事件监听器
+                bindEventListeners();
+                
+                // 绑定动态元素的事件
+                setupDynamicEventHandlers();
+                
+                // 注册Service Worker
+                registerServiceWorker();
+            } catch (error) {
+                console.error('初始化应用失败:', error);
+                showToast('应用初始化失败，请刷新页面', false);
+            }
         }
         
         // 注册Service Worker
@@ -705,243 +710,264 @@
         
         // 更新攒钱显示
         function updateSavingsDisplay() {
-            // 计算所有攒钱记录的总金额（换算为人民币）
-            let total = 0;
-            appData.savings.forEach(saving => {
-                saving.records.forEach(record => {
-                    if (record.currency === 'MOP') {
-                        total += record.amount * EXCHANGE_RATE;
-                    } else {
-                        total += record.amount;
-                    }
+            try {
+                // 计算所有攒钱记录的总金额（换算为人民币）
+                let total = 0;
+                appData.savings.forEach(saving => {
+                    saving.records.forEach(record => {
+                        if (record.currency === 'MOP') {
+                            total += record.amount * EXCHANGE_RATE;
+                        } else {
+                            total += record.amount;
+                        }
+                    });
                 });
-            });
-            
-            appData.totalSavings = total;
-            document.getElementById('totalSavings').textContent = total.toFixed(2);
-            saveData();
+                
+                appData.totalSavings = total;
+                document.getElementById('totalSavings').textContent = total.toFixed(2);
+                document.getElementById('totalSavingsTab').textContent = total.toFixed(2);
+                saveData();
+            } catch (error) {
+                console.error('更新攒钱显示失败:', error);
+            }
         }
         
         // 渲染事件列表
         function renderEvents(filterType = 'plus') {
-            const eventsContainer = document.getElementById('eventsContainer');
-            eventsContainer.innerHTML = '';
-            
-            // 根据筛选类型过滤事件
-            let filteredEvents = appData.events.filter(e => 
-                filterType === 'plus' ? e.points > 0 : e.points < 0
-            );
-            
-            if (filteredEvents.length === 0) {
-                eventsContainer.innerHTML = `
-                    <div class="card p-5 text-center">
-                        <i class="fa fa-calendar-plus-o text-4xl text-gray-300 mb-3"></i>
-                        <p class="text-gray-500">还没有${filterType === 'plus' ? '加分' : '扣分'}事件</p>
-                    </div>
-                `;
-                return;
+            try {
+                const eventsContainer = document.getElementById('eventsContainer');
+                eventsContainer.innerHTML = '';
+                
+                // 根据筛选类型过滤事件
+                let filteredEvents = appData.events.filter(e => 
+                    filterType === 'plus' ? e.points > 0 : e.points < 0
+                );
+                
+                if (filteredEvents.length === 0) {
+                    eventsContainer.innerHTML = `
+                        <div class="card p-5 text-center">
+                            <i class="fa fa-calendar-plus-o text-4xl text-gray-300 mb-3"></i>
+                            <p class="text-gray-500">还没有${filterType === 'plus' ? '加分' : '扣分'}事件</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                filteredEvents.forEach(event => {
+                    const isPositive = event.points > 0;
+                    const pointColorClass = isPositive ? 'bg-success' : 'bg-danger';
+                    const pointIcon = isPositive ? 'fa-plus-circle' : 'fa-minus-circle';
+                    const actionText = isPositive ? '完成事件' : '扣除积分';
+                    
+                    const eventCard = document.createElement('div');
+                    eventCard.className = 'card fade-in';
+                    eventCard.innerHTML = `
+                        <div class="p-5">
+                            <div class="flex justify-between items-start mb-4">
+                                <h3 class="font-bold text-lg text-gray-800">${event.name}</h3>
+                                <span class="${pointColorClass} text-white px-3 py-1 rounded-full text-sm flex items-center">
+                                    <i class="fa ${pointIcon} mr-1"></i> ${isPositive ? '+' : ''}${event.points}
+                                </span>
+                            </div>
+                            <div class="flex space-x-3 mt-4">
+                                <button class="apply-event-btn flex-1 py-2.5 btn ${isPositive ? 'btn-success' : 'btn-danger'} rounded-xl" data-id="${event.id}">
+                                    ${actionText}
+                                </button>
+                                <button class="delete-btn w-12 py-2.5 bg-gray-100 hover:bg-danger hover:text-white rounded-xl" data-type="event" data-id="${event.id}">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    eventsContainer.appendChild(eventCard);
+                });
+            } catch (error) {
+                console.error('渲染事件列表失败:', error);
             }
-            
-            filteredEvents.forEach(event => {
-                const isPositive = event.points > 0;
-                const pointColorClass = isPositive ? 'bg-success' : 'bg-danger';
-                const pointIcon = isPositive ? 'fa-plus-circle' : 'fa-minus-circle';
-                const actionText = isPositive ? '完成事件' : '扣除积分';
-                
-                const eventCard = document.createElement('div');
-                eventCard.className = 'card fade-in';
-                eventCard.innerHTML = `
-                    <div class="p-5">
-                        <div class="flex justify-between items-start mb-4">
-                            <h3 class="font-bold text-lg text-gray-800">${event.name}</h3>
-                            <span class="${pointColorClass} text-white px-3 py-1 rounded-full text-sm flex items-center">
-                                <i class="fa ${pointIcon} mr-1"></i> ${isPositive ? '+' : ''}${event.points}
-                            </span>
-                        </div>
-                        <div class="flex space-x-3 mt-4">
-                            <button class="apply-event-btn flex-1 py-2.5 btn ${isPositive ? 'btn-success' : 'btn-danger'} rounded-xl" data-id="${event.id}">
-                                ${actionText}
-                            </button>
-                            <button class="delete-btn w-12 py-2.5 bg-gray-100 hover:bg-danger hover:text-white rounded-xl" data-type="event" data-id="${event.id}">
-                                <i class="fa fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-                
-                eventsContainer.appendChild(eventCard);
-            });
         }
         
         // 渲染奖励列表
         function renderRewards() {
-            const rewardsContainer = document.getElementById('rewardsContainer');
-            rewardsContainer.innerHTML = '';
-            
-            if (appData.rewards.length === 0) {
-                rewardsContainer.innerHTML = `
-                    <div class="card p-5 text-center">
-                        <i class="fa fa-gift text-4xl text-gray-300 mb-3"></i>
-                        <p class="text-gray-500">还没有奖励</p>
-                    </div>
-                `;
-                return;
+            try {
+                const rewardsContainer = document.getElementById('rewardsContainer');
+                rewardsContainer.innerHTML = '';
+                
+                if (appData.rewards.length === 0) {
+                    rewardsContainer.innerHTML = `
+                        <div class="card p-5 text-center">
+                            <i class="fa fa-gift text-4xl text-gray-300 mb-3"></i>
+                            <p class="text-gray-500">还没有奖励</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                appData.rewards.forEach(reward => {
+                    const canRedeem = appData.totalPoints >= reward.points;
+                    const redeemBtnClass = canRedeem ? 'btn-secondary' : 'bg-gray-300 cursor-not-allowed';
+                    
+                    const rewardCard = document.createElement('div');
+                    rewardCard.className = 'card fade-in';
+                    rewardCard.innerHTML = `
+                        <div class="p-5">
+                            <div class="flex justify-between items-start mb-3">
+                                <h3 class="font-bold text-lg text-gray-800">${reward.name}</h3>
+                                <span class="bg-yellow-400 text-white px-3 py-1 rounded-full text-sm flex items-center">
+                                    <i class="fa fa-star mr-1"></i> ${reward.points}
+                                </span>
+                            </div>
+                            <p class="text-gray-600 mb-4">${reward.description || '暂无描述'}</p>
+                            <div class="flex space-x-3 mt-4">
+                                <button class="redeem-btn flex-1 py-2.5 ${redeemBtnClass} rounded-xl" data-id="${reward.id}" ${canRedeem ? '' : 'disabled'}>
+                                    兑换奖励
+                                </button>
+                                <button class="delete-btn w-12 py-2.5 bg-gray-100 hover:bg-danger hover:text-white rounded-xl" data-type="reward" data-id="${reward.id}">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    rewardsContainer.appendChild(rewardCard);
+                });
+            } catch (error) {
+                console.error('渲染奖励列表失败:', error);
             }
-            
-            appData.rewards.forEach(reward => {
-                const canRedeem = appData.totalPoints >= reward.points;
-                const redeemBtnClass = canRedeem ? 'btn-secondary' : 'bg-gray-300 cursor-not-allowed';
-                
-                const rewardCard = document.createElement('div');
-                rewardCard.className = 'card fade-in';
-                rewardCard.innerHTML = `
-                    <div class="p-5">
-                        <div class="flex justify-between items-start mb-3">
-                            <h3 class="font-bold text-lg text-gray-800">${reward.name}</h3>
-                            <span class="bg-yellow-400 text-white px-3 py-1 rounded-full text-sm flex items-center">
-                                <i class="fa fa-star mr-1"></i> ${reward.points}
-                            </span>
-                        </div>
-                        <p class="text-gray-600 mb-4">${reward.description || '暂无描述'}</p>
-                        <div class="flex space-x-3 mt-4">
-                            <button class="redeem-btn flex-1 py-2.5 ${redeemBtnClass} rounded-xl" data-id="${reward.id}" ${canRedeem ? '' : 'disabled'}>
-                                兑换奖励
-                            </button>
-                            <button class="delete-btn w-12 py-2.5 bg-gray-100 hover:bg-danger hover:text-white rounded-xl" data-type="reward" data-id="${reward.id}">
-                                <i class="fa fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-                
-                rewardsContainer.appendChild(rewardCard);
-            });
         }
         
         // 渲染攒钱列表
         function renderSavings() {
-            const savingsContainer = document.getElementById('savingsContainer');
-            savingsContainer.innerHTML = '';
-            
-            if (appData.savings.length === 0) {
-                savingsContainer.innerHTML = `
-                    <div class="card p-5 text-center">
-                        <i class="fa fa-money text-4xl text-gray-300 mb-3"></i>
-                        <p class="text-gray-500">还没有攒钱计划</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            appData.savings.forEach(saving => {
-                // 计算已攒金额（考虑货币类型和汇率）
-                let savedAmount = 0;
-                saving.records.forEach(record => {
-                    if (record.currency === 'MOP') {
-                        savedAmount += record.amount * EXCHANGE_RATE;
-                    } else {
-                        savedAmount += record.amount;
-                    }
+            try {
+                const savingsContainer = document.getElementById('savingsContainer');
+                savingsContainer.innerHTML = '';
+                
+                if (appData.savings.length === 0) {
+                    savingsContainer.innerHTML = `
+                        <div class="card p-5 text-center">
+                            <i class="fa fa-money text-4xl text-gray-300 mb-3"></i>
+                            <p class="text-gray-500">还没有攒钱计划</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                appData.savings.forEach(saving => {
+                    // 计算已攒金额（考虑货币类型和汇率）
+                    let savedAmount = 0;
+                    saving.records.forEach(record => {
+                        if (record.currency === 'MOP') {
+                            savedAmount += record.amount * EXCHANGE_RATE;
+                        } else {
+                            savedAmount += record.amount;
+                        }
+                    });
+                    
+                    // 计算目标金额（如果是MOP则转换为CNY显示）
+                    const targetAmount = saving.currency === 'MOP' 
+                        ? saving.target * EXCHANGE_RATE 
+                        : saving.target;
+                    
+                    // 计算进度百分比
+                    const progress = Math.min(100, (savedAmount / targetAmount) * 100);
+                    
+                    const savingCard = document.createElement('div');
+                    savingCard.className = 'card fade-in';
+                    savingCard.innerHTML = `
+                        <div class="p-5">
+                            <div class="flex justify-between items-start mb-3">
+                                <h3 class="font-bold text-lg text-gray-800">${saving.name}</h3>
+                                <span class="bg-warning text-white px-3 py-1 rounded-full text-sm flex items-center">
+                                    <i class="fa fa-piggy-bank mr-1"></i>
+                                    <span>${saving.currency === 'MOP' ? 'MOP' : '¥'}</span>
+                                </span>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <div class="flex justify-between mb-1 text-sm text-gray-600">
+                                    <span>已攒: ${savedAmount.toFixed(2)} ¥</span>
+                                    <span>目标: ${targetAmount.toFixed(2)} ¥</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: ${progress}%"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex space-x-3 mt-4">
+                                <button class="add-record-btn flex-1 py-2.5 btn btn-warning rounded-xl" data-id="${saving.id}">
+                                    <i class="fa fa-plus mr-1"></i> 添加记录
+                                </button>
+                                <button class="view-records-btn w-12 py-2.5 bg-gray-100 hover:bg-primary hover:text-white rounded-xl" data-id="${saving.id}">
+                                    <i class="fa fa-history"></i>
+                                </button>
+                                <button class="delete-btn w-12 py-2.5 bg-gray-100 hover:bg-danger hover:text-white rounded-xl" data-type="saving" data-id="${saving.id}">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    savingsContainer.appendChild(savingCard);
                 });
-                
-                // 计算目标金额（如果是MOP则转换为CNY显示）
-                const targetAmount = saving.currency === 'MOP' 
-                    ? saving.target * EXCHANGE_RATE 
-                    : saving.target;
-                
-                // 计算进度百分比
-                const progress = Math.min(100, (savedAmount / targetAmount) * 100);
-                
-                const savingCard = document.createElement('div');
-                savingCard.className = 'card fade-in';
-                savingCard.innerHTML = `
-                    <div class="p-5">
-                        <div class="flex justify-between items-start mb-3">
-                            <h3 class="font-bold text-lg text-gray-800">${saving.name}</h3>
-                            <span class="bg-warning text-white px-3 py-1 rounded-full text-sm flex items-center">
-                                <i class="fa fa-piggy-bank mr-1"></i>
-                                <span>${saving.currency === 'MOP' ? 'MOP' : '¥'}</span>
-                            </span>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <div class="flex justify-between mb-1 text-sm text-gray-600">
-                                <span>已攒: ${savedAmount.toFixed(2)} ¥</span>
-                                <span>目标: ${targetAmount.toFixed(2)} ¥</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: ${progress}%"></div>
-                            </div>
-                        </div>
-                        
-                        <div class="flex space-x-3 mt-4">
-                            <button class="add-record-btn flex-1 py-2.5 btn btn-warning rounded-xl" data-id="${saving.id}">
-                                <i class="fa fa-plus mr-1"></i> 添加记录
-                            </button>
-                            <button class="view-records-btn w-12 py-2.5 bg-gray-100 hover:bg-primary hover:text-white rounded-xl" data-id="${saving.id}">
-                                <i class="fa fa-history"></i>
-                            </button>
-                            <button class="delete-btn w-12 py-2.5 bg-gray-100 hover:bg-danger hover:text-white rounded-xl" data-type="saving" data-id="${saving.id}">
-                                <i class="fa fa-trash"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-                
-                savingsContainer.appendChild(savingCard);
-            });
+            } catch (error) {
+                console.error('渲染攒钱列表失败:', error);
+            }
         }
         
         // 渲染攒钱记录
         function renderSavingRecords(savingId) {
-            const savingRecordsContainer = document.getElementById('savingRecordsContainer');
-            savingRecordsContainer.innerHTML = '';
-            
-            const saving = appData.savings.find(s => s.id === savingId);
-            if (!saving) return;
-            
-            document.getElementById('savingRecordsTitle').textContent = saving.name + ' - 攒钱记录';
-            
-            if (saving.records.length === 0) {
-                savingRecordsContainer.innerHTML = `
-                    <div class="card p-5 text-center">
-                        <i class="fa fa-inbox text-4xl text-gray-300 mb-3"></i>
-                        <p class="text-gray-500">还没有攒钱记录</p>
-                    </div>
-                `;
-                return;
-            }
-            
-            saving.records.forEach(record => {
-                // 计算人民币价值
-                const cnyValue = record.currency === 'MOP' 
-                    ? record.amount * EXCHANGE_RATE 
-                    : record.amount;
+            try {
+                const savingRecordsContainer = document.getElementById('savingRecordsContainer');
+                savingRecordsContainer.innerHTML = '';
                 
-                const recordDate = new Date(record.date);
-                const formattedDate = `${recordDate.getFullYear()}-${(recordDate.getMonth()+1).toString().padStart(2, '0')}-${recordDate.getDate().toString().padStart(2, '0')} ${recordDate.getHours().toString().padStart(2, '0')}:${recordDate.getMinutes().toString().padStart(2, '0')}`;
+                const saving = appData.savings.find(s => s.id === savingId);
+                if (!saving) return;
                 
-                const recordEl = document.createElement('div');
-                recordEl.className = 'record-item';
-                recordEl.innerHTML = `
-                    <div class="flex justify-between">
-                        <div>
-                            <div class="font-medium">${record.note || '无备注'}</div>
-                            <div class="text-sm text-gray-500">${formattedDate}</div>
+                document.getElementById('savingRecordsTitle').textContent = saving.name + ' - 攒钱记录';
+                
+                if (saving.records.length === 0) {
+                    savingRecordsContainer.innerHTML = `
+                        <div class="card p-5 text-center">
+                            <i class="fa fa-inbox text-4xl text-gray-300 mb-3"></i>
+                            <p class="text-gray-500">还没有攒钱记录</p>
                         </div>
-                        <div class="text-right">
-                            <div class="font-bold">${record.amount.toFixed(2)} 
-                                <span class="currency-tag ${record.currency === 'MOP' ? 'currency-mop' : 'currency-cny'}">
-                                    ${record.currency === 'MOP' ? 'MOP' : '¥'}
-                                </span>
+                    `;
+                    return;
+                }
+                
+                saving.records.forEach(record => {
+                    // 计算人民币价值
+                    const cnyValue = record.currency === 'MOP' 
+                        ? record.amount * EXCHANGE_RATE 
+                        : record.amount;
+                    
+                    const recordDate = new Date(record.date);
+                    const formattedDate = `${recordDate.getFullYear()}-${(recordDate.getMonth()+1).toString().padStart(2, '0')}-${recordDate.getDate().toString().padStart(2, '0')} ${recordDate.getHours().toString().padStart(2, '0')}:${recordDate.getMinutes().toString().padStart(2, '0')}`;
+                    
+                    const recordEl = document.createElement('div');
+                    recordEl.className = 'record-item';
+                    recordEl.innerHTML = `
+                        <div class="flex justify-between">
+                            <div>
+                                <div class="font-medium">${record.note || '无备注'}</div>
+                                <div class="text-sm text-gray-500">${formattedDate}</div>
                             </div>
-                            <div class="text-sm text-gray-500">≈ ${cnyValue.toFixed(2)} ¥</div>
+                            <div class="text-right">
+                                <div class="font-bold">${record.amount.toFixed(2)} 
+                                    <span class="currency-tag ${record.currency === 'MOP' ? 'currency-mop' : 'currency-cny'}">
+                                        ${record.currency === 'MOP' ? 'MOP' : '¥'}
+                                    </span>
+                                </div>
+                                <div class="text-sm text-gray-500">≈ ${cnyValue.toFixed(2)} ¥</div>
+                            </div>
                         </div>
-                    </div>
-                `;
-                
-                savingRecordsContainer.appendChild(recordEl);
-            });
+                    `;
+                    
+                    savingRecordsContainer.appendChild(recordEl);
+                });
+            } catch (error) {
+                console.error('渲染攒钱记录失败:', error);
+            }
         }
         
         // 显示通知
@@ -964,316 +990,324 @@
         
         // 绑定事件监听器
         function bindEventListeners() {
-            // 关闭所有模态框
-            document.querySelectorAll('.close-modal').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.modal').forEach(modal => {
-                        modal.style.display = 'none';
+            try {
+                // 关闭所有模态框
+                document.querySelectorAll('.close-modal').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.modal').forEach(modal => {
+                            modal.style.display = 'none';
+                        });
                     });
                 });
-            });
-            
-            // 选项卡切换
-            document.getElementById('eventsTabBtn').addEventListener('click', () => {
-                showTab('eventsTab');
-                renderEvents('plus');
-            });
-            
-            document.getElementById('rewardsTabBtn').addEventListener('click', () => {
-                showTab('rewardsTab');
-                renderRewards();
-            });
-            
-            document.getElementById('savingsTabBtn').addEventListener('click', () => {
-                showTab('savingsTab');
-                renderSavings();
-            });
-            
-            // 事件分类筛选
-            document.getElementById('plusEventsBtn').addEventListener('click', () => {
-                renderEvents('plus');
-            });
-            
-            document.getElementById('minusEventsBtn').addEventListener('click', ()极 {
-                renderEvents('minus');
-            });
-            
-            // 添加事件按钮
-            document.getElementById('addEventBtn').addEventListener('click', () => {
-                showModal('addEventModal');
-            });
-            
-            // 添加奖励按钮
-            document.getElementById('addRewardBtn').addEventListener('click', () => {
-                showModal('addRewardModal');
-            });
-            
-            // 添加攒钱项按钮
-            document.getElementById('addSavingBtn').addEventListener('click', () => {
-                showModal('addSavingModal');
-            });
-            
-            // 积分按钮选择
-            document.querySelectorAll('.event-point-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.event-point-btn').forEach(b => {
-                        b.classList.remove('active');
-                    });
-                    btn.classList.add('active');
-                    document.getElementById('eventPoints').value = btn.dataset.points;
-                });
-            });
-            
-            // 表单提交
-            document.getElementById('addEventForm').addEventListener('submit', (e) => {
-                e.preventDefault();
                 
-                const name = document.getElementById('eventName').value.trim();
-                const type = document.querySelector('input[name="eventType"]:checked').value;
-                const points = parseInt(document.getElementById('eventPoints').value) * (type === 'plus' ? 1 : -1);
-                
-                if (!name) {
-                    showToast('事件名称不能为空', false);
-                    return;
-                }
-                
-                appData.events.push({
-                    id: Date.now().toString(),
-                    name,
-                    points
+                // 选项卡切换
+                document.getElementById('eventsTabBtn').addEventListener('click', () => {
+                    showTab('eventsTab');
+                    renderEvents('plus');
                 });
                 
-                saveData();
-                renderEvents(type === 'plus' ? 'plus' : 'minus');
-                document.getElementById('addEventModal').style.display = 'none';
-                showToast('事件添加成功');
-            });
-            
-            document.getElementById('addRewardForm').addEventListener('submit', (e) => {
-                e.preventDefault();
-                
-                const name = document.getElementById('rewardName').value.trim();
-                const points = parseInt(document.getElementById('rewardPoints').value);
-                const description = document.getElementById('rewardDescription').value.trim();
-                
-                if (!name) {
-                    showToast('奖励名称不能为空', false);
-                    return;
-                }
-                
-                if (points < 1) {
-                    showToast('所需积分必须大于0', false);
-                    return;
-                }
-                
-                appData.rewards.push({
-                    id: Date.now().toString(),
-                    name,
-                    points,
-                    description
+                document.getElementById('rewardsTabBtn').addEventListener('click', () => {
+                    showTab('rewardsTab');
+                    renderRewards();
                 });
                 
-                saveData();
-                renderRewards();
-                document.getElementById('addRewardModal').style.display = 'none';
-                showToast('奖励添加成功');
-            });
-            
-            document.getElementById('addSavingForm').addEventListener('submit', (e) => {
-                e.preventDefault();
-                
-                const name = document.getElementById('savingName').value.trim();
-                const target = parseFloat(document.getElementById('savingTarget').value);
-                const currency = document.getElementById('savingCurrency').value;
-                
-                if (!name) {
-                    showToast('项目名称不能为空', false);
-                    return;
-                }
-                
-                if (isNaN(target) || target <= 0) {
-                    showToast('目标金额必须大于0', false);
-                    return;
-                }
-                
-                appData.savings.push({
-                    id: Date.now().toString(),
-                    name,
-                    target,
-                    currency,
-                    records: []
-                });
-                
-                saveData();
-                renderSavings();
-                updateSavingsDisplay();
-                document.getElementById('addSavingModal').style.display = 'none';
-                showToast('攒钱项目添加成功');
-            });
-            
-            document.getElementById('addSavingRecordForm').addEventListener('submit', (e) => {
-                e.preventDefault();
-                
-                const savingId = document.getElementById('currentSavingId').value;
-                const amount = parseFloat(document.getElementById('recordAmount').value);
-                const currency = document.getElementById('recordCurrency').value;
-                const note = document.getElementById('recordNote').value.trim();
-                
-                if (isNaN(amount) || amount <= 0) {
-                    showToast('金额必须大于0', false);
-                    return;
-                }
-                
-                const saving = appData.savings.find(s => s.id === savingId);
-                if (saving) {
-                    saving.records.push({
-                        id: Date.now().toString(),
-                        date: new Date().toISOString(),
-                        amount,
-                        currency,
-                        note
-                    });
-                    
-                    saveData();
-                    updateSavingsDisplay();
+                document.getElementById('savingsTabBtn').addEventListener('click', () => {
+                    showTab('savingsTab');
                     renderSavings();
-                    document.getElementById('addSavingRecordModal').style.display = 'none';
-                    showToast('攒钱记录添加成功');
+                });
+                
+                // 事件分类筛选
+                document.getElementById('plusEventsBtn').addEventListener('click', () => {
+                    renderEvents('plus');
+                });
+                
+                document.getElementById('minusEventsBtn').addEventListener('click', () => {
+                    renderEvents('minus');
+                });
+                
+                // 添加事件按钮
+                document.getElementById('addEventBtn').addEventListener('click', () => {
+                    showModal('addEventModal');
+                });
+                
+                // 添加奖励按钮
+                document.getElementById('addRewardBtn').addEventListener('click', () => {
+                    showModal('addRewardModal');
+                });
+                
+                // 添加攒钱项按钮
+                document.getElementById('addSavingBtn').addEventListener('click', () => {
+                    showModal('addSavingModal');
+                });
+                
+                // 积分按钮选择
+                document.querySelectorAll('.event-point-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.event-point-btn').forEach(b => {
+                            b.classList.remove('active');
+                        });
+                        btn.classList.add('active');
+                        document.getElementById('eventPoints').value = btn.dataset.points;
+                    });
+                });
+                
+                // 表单提交
+                document.getElementById('addEventForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
                     
-                    // 如果是从记录查看模态框添加的，刷新记录显示
-                    if (document.getElementById('viewSavingRecordsModal').style.display === 'flex') {
-                        renderSavingRecords(savingId);
+                    const name = document.getElementById('eventName').value.trim();
+                    const type = document.querySelector('input[name="eventType"]:checked').value;
+                    const points = parseInt(document.getElementById('eventPoints').value) * (type === 'plus' ? 1 : -1);
+                    
+                    if (!name) {
+                        showToast('事件名称不能为空', false);
+                        return;
                     }
                     
-                    // 重置表单
-                    document.getElementById('recordAmount').value = '';
-                    document.getElementById('recordNote').value = '';
-                }
-            });
-            
-            // 确认删除
-            document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
-                if (currentDeleteId && currentDeleteType) {
-                    if (currentDeleteType === 'event') {
-                        appData.events = appData.events.filter(e => e.id !== currentDeleteId);
-                        renderEvents();
-                    } else if (currentDeleteType === 'reward') {
-                        appData.rewards = appData.rewards.filter(r => r.id !== currentDeleteId);
-                        renderRewards();
-                    } else if (currentDeleteType === 'saving') {
-                        appData.savings = appData.savings.filter(s => s.id !== currentDeleteId);
-                        renderSavings();
-                        updateSavingsDisplay();
-                    }
+                    appData.events.push({
+                        id: Date.now().toString(),
+                        name,
+                        points
+                    });
                     
                     saveData();
-                    showToast('删除成功');
-                    document.getElementById('deleteModal').style.display = 'none';
+                    renderEvents(type === 'plus' ? 'plus' : 'minus');
+                    document.getElementById('addEventModal').style.display = 'none';
+                    showToast('事件添加成功');
+                });
+                
+                document.getElementById('addRewardForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
                     
-                    // 重置删除状态
-                    currentDeleteId = null;
-                    currentDeleteType = null;
-                }
-            });
-            
-            // 添加新记录按钮（在记录查看模态框中）
-            document.getElementById('addNewRecordBtn').addEventListener('click', () => {
-                const saving = appData.savings.find(s => s.id === currentSavingId);
-                if (saving) {
-                    document.getElementById('savingRecordTitle').textContent = `添加记录 - ${saving.name}`;
-                    document.getElementById('currentSavingId').value = currentSavingId;
-                    document.getElementById('viewSavingRecordsModal').style.display = 'none';
-                    document.getElementById('addSavingRecordModal').style.display = 'flex';
-                }
-            });
+                    const name = document.getElementById('rewardName').value.trim();
+                    const points = parseInt(document.getElementById('rewardPoints').value);
+                    const description = document.getElementById('rewardDescription').value.trim();
+                    
+                    if (!name) {
+                        showToast('奖励名称不能为空', false);
+                        return;
+                    }
+                    
+                    if (points < 1) {
+                        showToast('所需积分必须大于0', false);
+                        return;
+                    }
+                    
+                    appData.rewards.push({
+                        id: Date.now().toString(),
+                        name,
+                        points,
+                        description
+                    });
+                    
+                    saveData();
+                    renderRewards();
+                    document.getElementById('addRewardModal').style.display = 'none';
+                    showToast('奖励添加成功');
+                });
+                
+                document.getElementById('addSavingForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    
+                    const name = document.getElementById('savingName').value.trim();
+                    const target = parseFloat(document.getElementById('savingTarget').value);
+                    const currency = document.getElementById('savingCurrency').value;
+                    
+                    if (!name) {
+                        showToast('项目名称不能为空', false);
+                        return;
+                    }
+                    
+                    if (isNaN(target) || target <= 0) {
+                        showToast('目标金额必须大于0', false);
+                        return;
+                    }
+                    
+                    appData.savings.push({
+                        id: Date.now().toString(),
+                        name,
+                        target,
+                        currency,
+                        records: []
+                    });
+                    
+                    saveData();
+                    renderSavings();
+                    updateSavingsDisplay();
+                    document.getElementById('addSavingModal').style.display = 'none';
+                    showToast('攒钱项目添加成功');
+                });
+                
+                document.getElementById('addSavingRecordForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    
+                    const savingId = document.getElementById('currentSavingId').value;
+                    const amount = parseFloat(document.getElementById('recordAmount').value);
+                    const currency = document.getElementById('recordCurrency').value;
+                    const note = document.getElementById('recordNote').value.trim();
+                    
+                    if (isNaN(amount) || amount <= 0) {
+                        showToast('金额必须大于0', false);
+                        return;
+                    }
+                    
+                    const saving = appData.savings.find(s => s.id === savingId);
+                    if (saving) {
+                        saving.records.push({
+                            id: Date.now().toString(),
+                            date: new Date().toISOString(),
+                            amount,
+                            currency,
+                            note
+                        });
+                        
+                        saveData();
+                        updateSavingsDisplay();
+                        renderSavings();
+                        document.getElementById('addSavingRecordModal').style.display = 'none';
+                        showToast('攒钱记录添加成功');
+                        
+                        // 如果是从记录查看模态框添加的，刷新记录显示
+                        if (document.getElementById('viewSavingRecordsModal').style.display === 'flex') {
+                            renderSavingRecords(savingId);
+                        }
+                        
+                        // 重置表单
+                        document.getElementById('recordAmount').value = '';
+                        document.getElementById('recordNote').value = '';
+                    }
+                });
+                
+                // 确认删除
+                document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+                    if (currentDeleteId && currentDeleteType) {
+                        if (currentDeleteType === 'event') {
+                            appData.events = appData.events.filter(e => e.id !== currentDeleteId);
+                            renderEvents();
+                        } else if (currentDeleteType === 'reward') {
+                            appData.rewards = appData.rewards.filter(r => r.id !== currentDeleteId);
+                            renderRewards();
+                        } else if (currentDeleteType === 'saving') {
+                            appData.savings = appData.savings.filter(s => s.id !== currentDeleteId);
+                            renderSavings();
+                            updateSavingsDisplay();
+                        }
+                        
+                        saveData();
+                        showToast('删除成功');
+                        document.getElementById('deleteModal').style.display = 'none';
+                        
+                        // 重置删除状态
+                        currentDeleteId = null;
+                        currentDeleteType = null;
+                    }
+                });
+                
+                // 添加新记录按钮（在记录查看模态框中）
+                document.getElementById('addNewRecordBtn').addEventListener('click', () => {
+                    const saving = appData.savings.find(s => s.id === currentSavingId);
+                    if (saving) {
+                        document.getElementById('savingRecordTitle').textContent = `添加记录 - ${saving.name}`;
+                        document.getElementById('currentSavingId').value = currentSavingId;
+                        document.getElementById('viewSavingRecordsModal').style.display = 'none';
+                        document.getElementById('addSavingRecordModal').style.display = 'flex';
+                    }
+                });
+            } catch (error) {
+                console.error('绑定事件监听器失败:', error);
+            }
         }
         
         // 为动态生成的元素绑定事件
         function setupDynamicEventHandlers() {
             document.body.addEventListener('pointerdown', function(e) {
-                // 应用事件
-                if (e.target.closest('.apply-event-btn')) {
-                    const btn = e.target.closest('.apply-event-btn');
-                    const eventId = btn.dataset.id;
-                    const event = appData.events.find(ev => ev.id === eventId);
-                    if (event) {
-                        appData.totalPoints += event.points;
-                        updatePointsDisplay();
-                        saveData();
-                        showToast(`成功${event.points > 0 ? '获得' : '扣除'} ${Math.abs(event.points)} 积分`);
-                    }
-                    return;
-                }
-                
-                // 删除按钮
-                if (e.target.closest('.delete-btn')) {
-                    const btn = e.target.closest('.delete-btn');
-                    const id = btn.dataset.id;
-                    const type = btn.dataset.type;
-                    
-                    currentDeleteId = id;
-                    currentDeleteType = type;
-                    
-                    let title = '';
-                    let message = '';
-                    
-                    if (type === 'event') {
-                        const event = appData.events.find(e => e.id === id);
-                        title = '删除事件';
-                        message = `确定要删除事件 "${event.name}" 吗？`;
-                    } else if (type === 'reward') {
-                        const reward = appData.rewards.find(r => r.id === id);
-                        title = '删除奖励';
-                        message = `确定要删除奖励 "${reward.name}" 吗？`;
-                    } else if (type === 'saving') {
-                        const saving = appData.savings.find(s => s.id === id);
-                        title = '删除攒钱项目';
-                        message = `确定要删除攒钱项目 "${saving.name}" 吗？`;
+                try {
+                    // 应用事件
+                    if (e.target.closest('.apply-event-btn')) {
+                        const btn = e.target.closest('.apply-event-btn');
+                        const eventId = btn.dataset.id;
+                        const event = appData.events.find(ev => ev.id === eventId);
+                        if (event) {
+                            appData.totalPoints += event.points;
+                            updatePointsDisplay();
+                            saveData();
+                            showToast(`成功${event.points > 0 ? '获得' : '扣除'} ${Math.abs(event.points)} 积分`);
+                        }
+                        return;
                     }
                     
-                    document.getElementById('deleteModalTitle').textContent = title;
-                    document.getElementById('deleteModalMessage').textContent = message;
-                    document.getElementById('deleteModal').style.display = 'flex';
-                    return;
-                }
-                
-                // 兑换奖励
-                if (e.target.closest('.redeem-btn')) {
-                    const btn = e.target.closest('.redeem-btn');
-                    const rewardId = btn.dataset.id;
-                    const reward = appData.rewards.find(r => r.id === rewardId);
-                    if (reward && appData.totalPoints >= reward.points) {
-                        appData.totalPoints -= reward.points;
-                        updatePointsDisplay();
-                        saveData();
-                        showToast(`成功兑换 "${reward.name}"`);
+                    // 删除按钮
+                    if (e.target.closest('.delete-btn')) {
+                        const btn = e.target.closest('.delete-btn');
+                        const id = btn.dataset.id;
+                        const type = btn.dataset.type;
+                        
+                        currentDeleteId = id;
+                        currentDeleteType = type;
+                        
+                        let title = '';
+                        let message = '';
+                        
+                        if (type === 'event') {
+                            const event = appData.events.find(e => e.id === id);
+                            title = '删除事件';
+                            message = `确定要删除事件 "${event.name}" 吗？`;
+                        } else if (type === 'reward') {
+                            const reward = appData.rewards.find(r => r.id === id);
+                            title = '删除奖励';
+                            message = `确定要删除奖励 "${reward.name}" 吗？`;
+                        } else if (type === 'saving') {
+                            const saving = appData.savings.find(s => s.id === id);
+                            title = '删除攒钱项目';
+                            message = `确定要删除攒钱项目 "${saving.name}" 吗？`;
+                        }
+                        
+                        document.getElementById('deleteModalTitle').textContent = title;
+                        document.getElementById('deleteModalMessage').textContent = message;
+                        document.getElementById('deleteModal').style.display = 'flex';
+                        return;
                     }
-                    return;
-                }
-                
-                // 添加攒钱记录
-                if (e.target.closest('.add-record-btn')) {
-                    const btn = e.target.closest('.add-record-btn');
-                    const savingId = btn.dataset.id;
-                    currentSavingId = savingId;
-                    document.getElementById('currentSavingId').value = savingId;
                     
-                    const saving = appData.savings.find(s => s.id === savingId);
-                    if (saving) {
-                        document.getElementById('savingRecordTitle').textContent = `添加记录 - ${saving.name}`;
-                        document.getElementById('addSavingRecordModal').style.display = 'flex';
+                    // 兑换奖励
+                    if (e.target.closest('.redeem-btn')) {
+                        const btn = e.target.closest('.redeem-btn');
+                        const rewardId = btn.dataset.id;
+                        const reward = appData.rewards.find(r => r.id === rewardId);
+                        if (reward && appData.totalPoints >= reward.points) {
+                            appData.totalPoints -= reward.points;
+                            updatePointsDisplay();
+                            saveData();
+                            showToast(`成功兑换 "${reward.name}"`);
+                        }
+                        return;
                     }
-                    return;
-                }
-                
-                // 查看攒钱记录
-                if (e.target.closest('.view-records-btn')) {
-                    const btn = e.target.closest('.view-records-btn');
-                    const savingId = btn.dataset.id;
-                    currentSavingId = savingId;
-                    renderSavingRecords(savingId);
-                    document.getElementById('viewSavingRecordsModal').style.display = 'flex';
-                    return;
+                    
+                    // 添加攒钱记录
+                    if (e.target.closest('.add-record-btn')) {
+                        const btn = e.target.closest('.add-record-btn');
+                        const savingId = btn.dataset.id;
+                        currentSavingId = savingId;
+                        document.getElementById('currentSavingId').value = savingId;
+                        
+                        const saving = appData.savings.find(s => s.id === savingId);
+                        if (saving) {
+                            document.getElementById('savingRecordTitle').textContent = `添加记录 - ${saving.name}`;
+                            document.getElementById('addSavingRecordModal').style.display = 'flex';
+                        }
+                        return;
+                    }
+                    
+                    // 查看攒钱记录
+                    if (e.target.closest('.view-records-btn')) {
+                        const btn = e.target.closest('.view-records-btn');
+                        const savingId = btn.dataset.id;
+                        currentSavingId = savingId;
+                        renderSavingRecords(savingId);
+                        document.getElementById('viewSavingRecordsModal').style.display = 'flex';
+                        return;
+                    }
+                } catch (error) {
+                    console.error('处理动态事件失败:', error);
                 }
             });
         }
