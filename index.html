@@ -4,18 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>积分奖励系统</title>
-    <!-- 缓存控制头：防止浏览器缓存旧版本代码 -->
+    
+    <!-- PWA 配置 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#165DFF">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+    
+    <!-- 缓存控制头 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- 添加版本控制 -->
     <script>
-        // 版本控制代码
-        const APP_VERSION = "1.0.1";
+        // 版本控制代码 - 每次更新时修改这个版本号
+        const APP_VERSION = "1.0.3";
         const savedVersion = localStorage.getItem('appVersion');
         
         if (savedVersion !== APP_VERSION) {
@@ -24,6 +27,10 @@
             location.reload(true); // 强制刷新页面
         }
     </script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
     
     <script>
         tailwind.config = {
@@ -106,7 +113,7 @@
         }
         
         .btn-success {
-            background: linear-gradient(to right, #45CFF9, #48CFAD);
+            background: linear-gradient(to极 right, #45CFF9, #48CFAD);
             color: white;
             border: none;
         }
@@ -206,7 +213,7 @@
             opacity: 0;
             transition: opacity 0.3s;
             z-index: 2000;
-            min-height: 44px;
+            min-height: 44极;
         }
         
         .toast.show {
@@ -321,8 +328,7 @@
                     <button id="minusEventsBtn" class="btn btn-danger px-5 py-2 flex-1">扣分事件</button>
                 </div>
                 
-                <!-- 事件列表容器 -->
-                <!-- 修改布局为单列 -->
+                <!-- 事件列表容器 - 确保始终单列 -->
                 <div id="eventsContainer" class="grid grid-cols-1 gap-4">
                     <!-- 事件卡片会动态生成在这里 -->
                     <div class="card p-5 text-center">
@@ -341,12 +347,11 @@
                     </button>
                 </div>
                 
-                <!-- 奖励列表容器 -->
-                <!-- 修改布局为单列 -->
+                <!-- 奖励列表容器 - 确保始终单列 -->
                 <div id="rewardsContainer" class="grid grid-cols-1 gap-4">
                     <!-- 奖励卡片会动态生成在这里 -->
                     <div class="card p-5 text-center">
-                        <i class="fa fa-gift text-4xl text-gray-300 mb-3"></i>
+                        <i class="fa fa-gift text-4xl text-gray-300 mb-3"></极>
                         <p class="text-gray-500">暂无奖励，点击"添加奖励"按钮创建</p>
                     </div>
                 </div>
@@ -373,7 +378,7 @@
                     </div>
                 </div>
                 
-                <!-- 攒钱列表容器 -->
+                <!-- 攒钱列表容器 - 确保始终单列 -->
                 <div id="savingsContainer" class="grid grid-cols-1 gap-4">
                     <!-- 攒钱卡片会动态生成在这里 -->
                     <div class="card p-5 text-center">
@@ -643,6 +648,22 @@
             
             // 绑定动态元素的事件
             setupDynamicEventHandlers();
+            
+            // 注册Service Worker
+            registerServiceWorker();
+        }
+        
+        // 注册Service Worker
+        function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('Service Worker 注册成功:', registration);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker 注册失败:', error);
+                    });
+            }
         }
         
         // 从本地存储加载数据
@@ -973,7 +994,7 @@
                 renderEvents('plus');
             });
             
-            document.getElementById('minusEventsBtn').addEventListener('click', () => {
+            document.getElementById('minusEventsBtn').addEventListener('click', ()极 {
                 renderEvents('minus');
             });
             
